@@ -21,6 +21,10 @@ const (
 	KeywordMaxlength = 1000
 	// MaxBodyLength - max length of body to store
 	MaxBodyLength = 0x40000
+	// MissingName - common constant string
+	MissingName = "-MISSING-NAME"
+	// RedactedEmail - common constant string
+	RedactedEmail = "-REDACTED-EMAIL"
 )
 
 var (
@@ -262,6 +266,50 @@ func DeepSet(m interface{}, ks []string, v interface{}, create bool) (err error)
 			continue
 		}
 		c[k] = v
+	}
+	return
+}
+
+// RedactEmail - possibly redact email from "in"
+// If in contains @, replace part after last "@" with suff
+// If in doesn't contain "@" then return it or (if forceSuff is set) return in + suff
+func RedactEmail(in, suff string, forceSuff bool) string {
+	ary := strings.Split(strings.Trim(strings.TrimSpace(in), "@"), "@")
+	n := len(ary)
+	if n <= 1 {
+		if forceSuff {
+			return in + suff
+		}
+		return in
+	}
+	return strings.TrimSpace(strings.Join(ary[:n-1], "@")) + suff
+}
+
+// PostprocessNameUsername - check name field, if it is empty then copy from email (if not empty) or username (if not empty)
+// Then check name and username - it cannot contain email addess, if it does - replace a@domain with a-MISSING-NAME
+func PostprocessNameUsername(name, username, email string) (outName, outUsername string) {
+	defer func() {
+		outName = name
+		outUsername = username
+	}()
+	copiedName := false
+	if name == "" || name == "none" {
+		if email != "" && email != "none" {
+			name = RedactEmail(email, MissingName, true)
+			copiedName = true
+		}
+	}
+	if name == "" || name == "none" {
+		if username != "" && username != "none" {
+			name = RedactEmail(username, MissingName, true)
+			copiedName = true
+		}
+	}
+	if !copiedName && name != "" && name != "none" {
+		name = RedactEmail(name, RedactedEmail, false)
+	}
+	if username != "" && username != "none" {
+		username = RedactEmail(username, RedactedEmail, false)
 	}
 	return
 }
