@@ -17,11 +17,15 @@ const (
 	MaxPayloadPrintfLen = 0x2000
 	// CacheCleanupProb - 2% chance of cleaning the cache
 	CacheCleanupProb = 2
+	// KeywordMaxlength - max description length
+	KeywordMaxlength = 1000
 )
 
 var (
 	memCacheMtx *sync.RWMutex
 	memCache    = map[string]*MemCacheEntry{}
+	// RawFields - standard raw fields
+	RawFields = []string{"metadata__updated_on", "metadata__timestamp", "origin", "tags", "uuid", "offset"}
 )
 
 // MemCacheEntry - single cache entry
