@@ -65,6 +65,8 @@ var (
 	// TZOffsetRE - time zone offset that comes after +0... +1... -0... -1...
 	// Can be 3 disgits or 3 digits then whitespace and then anything
 	TZOffsetRE = regexp.MustCompile(`^(\d{3})(\s+.*$|$)`)
+	// DefaultDateFrom - default date from
+	DefaultDateFrom = time.Date(1970, 1, 1, 0, 0, 0, 0, time.UTC)
 )
 
 // ToYMDHMSDate - return time formatted as YYYY-MM-DD HH:MI:SS
@@ -280,5 +282,43 @@ func PeriodParse(perStr string) (dur time.Duration, ok bool) {
 	}
 	dur = d
 	ok = true
+	return
+}
+
+// ToYMDHMDate - return time formatted as YYYY-MM-DD HH:MI
+func ToYMDHMDate(dt time.Time) string {
+	return fmt.Sprintf("%04d-%02d-%02d %02d:%02d", dt.Year(), dt.Month(), dt.Day(), dt.Hour(), dt.Minute())
+}
+
+// ToESDate - return time formatted as YYYY-MM-DDTHH:MI:SS.uuuuuu+00:00
+func ToESDate(dt time.Time) string {
+	return fmt.Sprintf("%04d-%02d-%02dT%02d:%02d:%02d.%06.0f+00:00", dt.Year(), dt.Month(), dt.Day(), dt.Hour(), dt.Minute(), dt.Second(), float64(dt.Nanosecond())/1.0e3)
+}
+
+// TimeParseES - parse datetime in ElasticSearch output format
+func TimeParseES(dtStr string) (time.Time, error) {
+	dtStr = strings.TrimSpace(strings.Replace(dtStr, "Z", "", -1))
+	ary := strings.Split(dtStr, "+")
+	ary2 := strings.Split(ary[0], ".")
+	var s string
+	if len(ary2) == 1 {
+		s = ary2[0] + ".000"
+	} else {
+		if len(ary2[1]) > 3 {
+			ary2[1] = ary2[1][:3]
+		}
+		s = strings.Join(ary2, ".")
+	}
+	return time.Parse("2006-01-02T15:04:05.000", s)
+}
+
+// TimeParseInterfaceString - parse interface{} -> string -> time.Time
+func TimeParseInterfaceString(date interface{}) (dt time.Time, err error) {
+	sDate, ok := date.(string)
+	if !ok {
+		err = fmt.Errorf("%+v %T is not a string", date, date)
+		return
+	}
+	dt, err = TimeParseES(sDate)
 	return
 }

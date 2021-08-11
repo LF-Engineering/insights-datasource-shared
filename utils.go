@@ -151,3 +151,111 @@ func InterfaceToStringTrunc(iface interface{}, maxLen int, addLenInfo bool) (str
 	str = "(" + strconv.Itoa(len(data)) + "): " + data[:half] + "(...)" + data[len(data)-half:]
 	return
 }
+
+// Dig interface for array of keys
+func Dig(iface interface{}, keys []string, fatal, silent bool) (v interface{}, ok bool) {
+	miss := false
+	defer func() {
+		if !ok && fatal {
+			Fatalf("cannot dig %+v in %s", keys, DumpKeys(iface))
+		}
+	}()
+	item, o := iface.(map[string]interface{})
+	if !o {
+		if !silent {
+			Printf("Interface cannot be parsed: %+v\n", iface)
+		}
+		return
+	}
+	last := len(keys) - 1
+	for i, key := range keys {
+		var o bool
+		if i < last {
+			item, o = item[key].(map[string]interface{})
+		} else {
+			v, o = item[key]
+		}
+		if !o {
+			if !silent {
+				Printf("dig %+v, current: %s, %d/%d failed\n", keys, key, i+1, last+1)
+			}
+			miss = true
+			break
+		}
+	}
+	ok = !miss
+	return
+}
+
+// DumpKeys - dump interface structure, but only keys, no values
+func DumpKeys(i interface{}) string {
+	return strings.Replace(fmt.Sprintf("%v", KeysOnly(i)), "map[]", "", -1)
+}
+
+// PreviewOnly - return a corresponding interface with preview values
+func PreviewOnly(i interface{}, l int) (o interface{}) {
+	if i == nil {
+		return
+	}
+	is, ok := i.(map[string]interface{})
+	if !ok {
+		str := InterfaceToStringTrunc(i, l, false)
+		str = strings.Replace(str, "\n", " ", -1)
+		o = str
+		return
+	}
+	iface := make(map[string]interface{})
+	for k, v := range is {
+		iface[k] = PreviewOnly(v, l)
+	}
+	o = iface
+	return
+}
+
+// KeysOnly - return a corresponding interface contining only keys
+func KeysOnly(i interface{}) (o map[string]interface{}) {
+	if i == nil {
+		return
+	}
+	is, ok := i.(map[string]interface{})
+	if !ok {
+		return
+	}
+	o = make(map[string]interface{})
+	for k, v := range is {
+		o[k] = KeysOnly(v)
+	}
+	return
+}
+
+// DeepSet - set deep property of non-type decoded interface
+func DeepSet(m interface{}, ks []string, v interface{}, create bool) (err error) {
+	c, ok := m.(map[string]interface{})
+	if !ok {
+		err = fmt.Errorf("cannot access %v as a string map", m)
+		return
+	}
+	last := len(ks) - 1
+	for i, k := range ks {
+		if i < last {
+			obj, ok := c[k]
+			if !ok {
+				if create {
+					c[k] = make(map[string]interface{})
+					obj = c[k]
+				} else {
+					err = fmt.Errorf("cannot access #%d key %s from %v, all keys %v", i+1, k, DumpKeys(c), ks)
+					return
+				}
+			}
+			c, ok = obj.(map[string]interface{})
+			if !ok {
+				err = fmt.Errorf("cannot access %v as a string map, #%d key %s, all keys %v", c, i+1, k, ks)
+				return
+			}
+			continue
+		}
+		c[k] = v
+	}
+	return
+}
