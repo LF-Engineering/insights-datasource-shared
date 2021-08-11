@@ -12,4 +12,17 @@
 *.out
 
 # Dependency directories (remove the comment below to include it)
-# vendor/
+vendor/
+
+# VIM
+*.swp
+
+# Others
+out
+
+.env
+
+# Sensitive files
+*.dump
+*.token
+*.secret

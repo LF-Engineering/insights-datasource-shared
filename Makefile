@@ -8,7 +8,7 @@ GO_LINT=golint -set_exit_status
 GO_VET=go vet
 GO_IMPORTS=goimports -w
 GO_ERRCHECK=errcheck -asserts -ignore '[FS]?[Pp]rint*'
-GO_FILES=error.go log.go redacted.go time.go utils.go
+GO_FILES=context.go error.go log.go redacted.go time.go utils.go
 all: check build
 check: fmt lint imports vet errcheck
 lint: ${GO_FILES}
@@ -23,3 +23,4 @@ errcheck: ${GO_FILES}
 	${GO_ERRCHECK} ${GO_FILES}
 build: ${GO_FILES}
 	${GO_BUILD}
+.PHONY: all
