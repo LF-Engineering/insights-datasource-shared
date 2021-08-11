@@ -408,9 +408,9 @@ func GetLastUpdate(ctx *Ctx, key string) (lastUpdate *time.Time) {
 	if ctx.ESURL == "" {
 		return
 	}
-	// curl -s -XPOST -H 'Content-type: application/json' '${URL}/last-update-cache/_search?size=0' -d '{"query":{"bool":{"filter":{"term":{"key":"ds:endpoint"}}}},"aggs":{"m":{"max":{"field":"last_update"}}}}' | jq -r '.aggregations.m.value_as_string'
+	// curl -s -XPOST -H 'Content-type: application/json' '${URL}/last-update-cache/_search?size=0' -d '{"query":{"bool":{"filter":{"term":{"key.keyword":"ds:endpoint"}}}},"aggs":{"m":{"max":{"field":"last_update"}}}}' | jq -r '.aggregations.m.value_as_string'
 	escapedKey := JSONEscape(ctx.DS + ":" + key)
-	payloadBytes := []byte(`{"query":{"bool":{"filter":{"term":{"key":"` + escapedKey + `"}}}},"aggs":{"m":{"max":{"field":"last_update"}}}}`)
+	payloadBytes := []byte(`{"query":{"bool":{"filter":{"term":{"key.keyword":"` + escapedKey + `"}}}},"aggs":{"m":{"max":{"field":"last_update"}}}}`)
 	url := ctx.ESURL + "/last-update-cache/_search?size=0"
 	if ctx.Debug > 0 {
 		Printf("resume from date query key=%s: %s\n", escapedKey, string(payloadBytes))
