@@ -151,6 +151,7 @@ func (ctx *Ctx) Init() {
 	}
 
 	// NCPUs scale
+	ctx.NCPUsScale = 1.0
 	if FlagPassed(ctx, "ncpus-scale") && *flagNCPUsScale > 0.0 {
 		ctx.NCPUsScale = *flagNCPUsScale
 	}
