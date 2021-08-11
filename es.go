@@ -462,3 +462,52 @@ func GetLastUpdate(ctx *Ctx, key string) (lastUpdate *time.Time) {
 	}
 	return
 }
+
+// SetLastUpdate - set last update date for a given data source
+func SetLastUpdate(ctx *Ctx, key string, when time.Time) {
+	if ctx.ESURL == "" {
+		return
+	}
+	escapedKey := JSONEscape(ctx.DS + ":" + key)
+	type docType struct {
+		Key        string    `json:"key"`
+		LastUpdate time.Time `json:"last_update"`
+		SavedAt    time.Time `json:"saved_at"`
+	}
+	doc := docType{Key: escapedKey, LastUpdate: when, SavedAt: time.Now()}
+	payloadBytes, err := jsoniter.Marshal(doc)
+	if err != nil {
+		Printf("json %s marshal error: %+v\n", doc, err)
+		return
+	}
+	payloadBody := bytes.NewReader(payloadBytes)
+	method := "POST"
+	url := fmt.Sprintf("%s/last-update-cache/_doc?refresh=true", ctx.ESURL)
+	req, err := http.NewRequest(method, url, payloadBody)
+	if err != nil {
+		sData := BytesToStringTrunc(payloadBytes, MaxPayloadPrintfLen, true)
+		Printf("New request error: %+v for %s url: %s, data: %s\n", err, method, url, sData)
+		return
+	}
+	req.Header.Set("Content-Type", "application/json")
+	resp, err := http.DefaultClient.Do(req)
+	if err != nil {
+		sData := BytesToStringTrunc(payloadBytes, MaxPayloadPrintfLen, true)
+		Printf("do request error: %+v for %s url: %s, data: %s\n", err, method, url, sData)
+		return
+	}
+	defer func() { _ = resp.Body.Close() }()
+	if resp.StatusCode != 201 {
+		sData := BytesToStringTrunc(payloadBytes, MaxPayloadPrintfLen, true)
+		var body []byte
+		body, err = ioutil.ReadAll(resp.Body)
+		if err != nil {
+			Printf("ReadAll non-ok request error: %+v for %s url: %s, data: %s\n", err, method, url, sData)
+			return
+		}
+		sBody := BytesToStringTrunc(body, MaxPayloadPrintfLen, true)
+		Printf("Method:%s url:%s data: %s status:%d\n%s\n", method, url, sData, resp.StatusCode, sBody)
+		return
+	}
+	return
+}
