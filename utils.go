@@ -41,7 +41,8 @@ func NoSSLVerify() {
 }
 
 // FlagPassed - was that flag actually passed (returns true) or the default value was used? (returns false)
-func FlagPassed(name string) bool {
+func FlagPassed(ctx *Ctx, name string) bool {
+	name = ctx.DSFlag + name
 	found := false
 	flag.Visit(func(f *flag.Flag) {
 		if f.Name == name {
