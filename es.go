@@ -405,6 +405,9 @@ func CreateESCache(ctx *Ctx) {
 
 // GetLastUpdate - get last update date from ElasticSearch
 func GetLastUpdate(ctx *Ctx, key string) (lastUpdate *time.Time) {
+	if ctx.ESURL == "" {
+		return
+	}
 	// curl -s -XPOST -H 'Content-type: application/json' '${URL}/last-update-cache/_search?size=0' -d '{"query":{"bool":{"filter":{"term":{"key":"ds:endpoint"}}}},"aggs":{"m":{"max":{"field":"last_update"}}}}' | jq -r '.aggregations.m.value_as_string'
 	escapedKey := JSONEscape(ctx.DS + ":" + key)
 	payloadBytes := []byte(`{"query":{"bool":{"filter":{"term":{"key":"` + escapedKey + `"}}}},"aggs":{"m":{"max":{"field":"last_update"}}}}`)
@@ -413,21 +416,27 @@ func GetLastUpdate(ctx *Ctx, key string) (lastUpdate *time.Time) {
 		Printf("resume from date query key=%s: %s\n", escapedKey, string(payloadBytes))
 	}
 	method := "POST"
-	resp, _, _, _, err := Request(
+	resp, status, _, _, err := Request(
 		ctx,
 		url,
 		method,
 		map[string]string{"Content-Type": "application/json"}, // headers
-		payloadBytes,                        // payload
-		[]string{},                          // cookies
-		nil,                                 // JSON statuses
-		nil,                                 // Error statuses
-		map[[2]int]struct{}{{200, 200}: {}}, // OK statuses: 200
-		nil,                                 // Cache statuses
-		true,                                // retry
-		nil,                                 // cache for
-		false,                               // skip in dry-run mode
+		payloadBytes, // payload
+		[]string{},   // cookies
+		nil,          // JSON statuses
+		nil,          // Error statuses
+		map[[2]int]struct{}{
+			{200, 200}: {},
+			{404, 404}: {},
+		}, // OK statuses
+		nil,   // Cache statuses
+		false, // retry
+		nil,   // cache for
+		false, // skip in dry-run mode
 	)
+	if status == 404 {
+		return
+	}
 	FatalOnError(err)
 	type resultStruct struct {
 		Aggs struct {
