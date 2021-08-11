@@ -17,6 +17,7 @@ const (
 // Ctx - environment context packed in structure
 // It gets configuration (named, say: xyz abc) from command line (--dsname-xyz-abc) or from env (DSNAME_XYZ_ABC), env value has higher priority than commandline flag
 type Ctx struct {
+	DS            string     // original data source name
 	DSEnv         string     // prefix for env variables: "abc xyz" -> "ABC_XYZ_"
 	DSFlag        string     // prefix for commanding flags: "abc xyz" -> "--abc-xyz"
 	Debug         int        // debug level: 0-no, 1-info, 2-verbose
@@ -67,6 +68,7 @@ func (ctx *Ctx) EnvSet(k string) bool {
 
 // InitEnv - initialize environment variables parser
 func (ctx *Ctx) InitEnv(dsName string) {
+	ctx.DS = dsName
 	ctx.DSEnv = strings.Replace(strings.ToUpper(dsName), " ", "_", -1) + "_"
 	ctx.DSFlag = strings.Replace(strings.ToLower(dsName), " ", "-", -1) + "-"
 }

@@ -402,3 +402,54 @@ func CreateESCache(ctx *Ctx) {
 	_, _, _, _, err := Request(ctx, ctx.ESURL+"/dads_cache", "PUT", nil, []byte{}, []string{}, nil, map[[2]int]struct{}{{401, 599}: {}}, nil, nil, false, nil, false)
 	FatalOnError(err)
 }
+
+// GetLastUpdate - get last update date from ElasticSearch
+func GetLastUpdate(ctx *Ctx, key string) (lastUpdate *time.Time) {
+	// curl -s -XPOST -H 'Content-type: application/json' '${URL}/last-update-cache/_search?size=0' -d '{"query":{"bool":{"filter":{"term":{"key":"ds:endpoint"}}}},"aggs":{"m":{"max":{"field":"last_update"}}}}' | jq -r '.aggregations.m.value_as_string'
+	escapedKey := JSONEscape(ctx.DS + ":" + key)
+	payloadBytes := []byte(`{"query":{"bool":{"filter":{"term":{"key":"` + escapedKey + `"}}}},"aggs":{"m":{"max":{"field":"last_update"}}}}`)
+	url := ctx.ESURL + "/last-update-cache/_search?size=0"
+	if ctx.Debug > 0 {
+		Printf("resume from date query key=%s: %s\n", escapedKey, string(payloadBytes))
+	}
+	method := "POST"
+	resp, _, _, _, err := Request(
+		ctx,
+		url,
+		method,
+		map[string]string{"Content-Type": "application/json"}, // headers
+		payloadBytes,                        // payload
+		[]string{},                          // cookies
+		nil,                                 // JSON statuses
+		nil,                                 // Error statuses
+		map[[2]int]struct{}{{200, 200}: {}}, // OK statuses: 200
+		nil,                                 // Cache statuses
+		true,                                // retry
+		nil,                                 // cache for
+		false,                               // skip in dry-run mode
+	)
+	FatalOnError(err)
+	type resultStruct struct {
+		Aggs struct {
+			M struct {
+				Str string `json:"value_as_string"`
+			} `json:"m"`
+		} `json:"aggregations"`
+	}
+	var res resultStruct
+	err = jsoniter.Unmarshal(resp.([]byte), &res)
+	if err != nil {
+		Printf("resume from date JSON decode error: %+v for %s url: %s, query: %s\n", err, method, url, string(payloadBytes))
+		return
+	}
+	if res.Aggs.M.Str != "" {
+		var tm time.Time
+		tm, err = TimeParseAny(res.Aggs.M.Str)
+		if err != nil {
+			Printf("resume from date decode aggregations error: %+v for %s url: %s, query: %s\n", err, method, url, string(payloadBytes))
+			return
+		}
+		lastUpdate = &tm
+	}
+	return
+}
