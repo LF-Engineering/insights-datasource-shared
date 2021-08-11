@@ -19,6 +19,8 @@ const (
 	CacheCleanupProb = 2
 	// KeywordMaxlength - max description length
 	KeywordMaxlength = 1000
+	// MaxBodyLength - max length of body to store
+	MaxBodyLength = 0x40000
 )
 
 var (
