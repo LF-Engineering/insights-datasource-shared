@@ -29,6 +29,8 @@ type Ctx struct {
 	Project       string     // set project can be for example "ONAP"
 	ProjectFilter bool       // set project filter (normally you only specify project, if you add project-filter flag, DS will try to filter by this project on an actual data source level)
 	PackSize      int        // data sources are outputting events in packs - here you can specify pack size, default is 1000
+	ESURL         string     // set ES cluster URL (optional but rather recommended)
+	NoCache       bool       // do not cache *any* HTTP requests
 	DateFrom      *time.Time // date from (for resuming)
 	DateTo        *time.Time // date to (for limiting)
 }
@@ -83,6 +85,8 @@ func (ctx *Ctx) Init() {
 	flagProject := flag.String(ctx.DSFlag+"project", "", "set project can be for example \"ONAP\"")
 	flagProjectFilter := flag.Bool(ctx.DSFlag+"project-filter", false, "set project filter (normally you only specify project, if you add project-filter flag, DS will try to filter by this project on an actual data source level)")
 	flagPackSize := flag.Int(ctx.DSFlag+"pack-size", 1000, "data sources are outputting events in packs - here you can specify pack size, default is 1000")
+	flagESURL := flag.String(ctx.DSFlag+"es-url", "", "ElasticSearch URL (optional but recommended)")
+	flagNoCache := flag.Bool(ctx.DSFlag+"no-cache", false, "do *NOT* cache any HTTP requests")
 	flagDateFrom := flag.String(ctx.DSFlag+"date-from", "", "date-from (for resuming)")
 	flagDateTo := flag.String(ctx.DSFlag+"date-to", "", "date-to (for limiting)")
 	flag.Parse()
@@ -202,6 +206,26 @@ func (ctx *Ctx) Init() {
 	projectFilter, present := ctx.BoolEnvSet("PROJECT_FILTER")
 	if present {
 		ctx.ProjectFilter = projectFilter
+	}
+
+	// ES URL
+	if FlagPassed(ctx, "es-url") && *flagESURL != "" {
+		ctx.ESURL = *flagESURL
+	}
+	if ctx.EnvSet("ES_URL") {
+		ctx.ESURL = ctx.Env("ES_URL")
+	}
+	if ctx.ESURL != "" {
+		AddRedacted(ctx.ESURL, false)
+	}
+
+	// No cache
+	if FlagPassed(ctx, "no-cache") {
+		ctx.NoCache = *flagNoCache
+	}
+	noCache, present := ctx.BoolEnvSet("NO_CACHE")
+	if present {
+		ctx.NoCache = noCache
 	}
 
 	// Events pack size
