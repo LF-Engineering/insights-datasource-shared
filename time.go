@@ -21,6 +21,8 @@ var (
 	parseDateCacheMtx *sync.RWMutex
 	// DefaultDateFrom - default date from
 	DefaultDateFrom = time.Date(1970, 1, 1, 0, 0, 0, 0, time.UTC)
+	// DefaultDateTo - default date to
+	DefaultDateTo = time.Date(2100, 1, 1, 0, 0, 0, 0, time.UTC)
 )
 
 // ToYMDHMSDate - return time formatted as YYYY-MM-DD HH:MI:SS
