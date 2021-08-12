@@ -14,6 +14,7 @@ import (
 
 var (
 	esCacheMtx *sync.RWMutex
+	unixEpoch  = time.Date(1970, time.January, 1, 0, 0, 0, 0, time.UTC)
 )
 
 // ESCacheEntry - single cache entry
@@ -465,7 +466,7 @@ func GetLastUpdate(ctx *Ctx, key string) (lastUpdate *time.Time) {
 
 // SetLastUpdate - set last update date for a given data source
 func SetLastUpdate(ctx *Ctx, key string, when time.Time) {
-	if ctx.ESURL == "" {
+	if ctx.ESURL == "" || when.Before(unixEpoch) {
 		return
 	}
 	escapedKey := JSONEscape(ctx.DS + ":" + key)
