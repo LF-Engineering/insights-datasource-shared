@@ -276,3 +276,8 @@ func TimeParseInterfaceString(date interface{}) (dt time.Time, err error) {
 	dt, err = TimeParseES(sDate)
 	return
 }
+
+// ToYMDTHMSZDate - return time formatted as YYYY-MM-DDTHH:MI:SSZ
+func ToYMDTHMSZDate(dt time.Time) string {
+	return fmt.Sprintf("%04d-%02d-%02dT%02d:%02d:%02dZ", dt.Year(), dt.Month(), dt.Day(), dt.Hour(), dt.Minute(), dt.Second())
+}

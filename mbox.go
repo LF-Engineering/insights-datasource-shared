@@ -61,6 +61,8 @@ var (
 	// TZOffsetRE - time zone offset that comes after +0... +1... -0... -1...
 	// Can be 3 disgits or 3 digits then whitespace and then anything
 	TZOffsetRE = regexp.MustCompile(`^(\d{3})(\s+.*$|$)`)
+	// MBoxMsgSeparator - used to split mbox file into separate messages
+	MBoxMsgSeparator = map[string][]byte{"default": []byte("\nFrom "), "groupsio": []byte("\nFrom ")}
 	// MsgLineSeparator - used to split mbox message into its separate lines
 	MsgLineSeparator = map[string][]byte{"default": []byte("\r\n"), "groupsio": []byte("\r\n")}
 	// MaxMessageProperties - maximum properties that can be set on the message object

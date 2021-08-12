@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"math/rand"
 	"net/http"
+	"os"
 	"strconv"
 	"strings"
 	"sync"
@@ -312,4 +313,25 @@ func PostprocessNameUsername(name, username, email string) (outName, outUsername
 		username = RedactEmail(username, RedactedEmail, false)
 	}
 	return
+}
+
+// EnsurePath - craete archive directory (and all necessary parents as well)
+// if noLastDir is set, then skip creating the last directory in the path
+func EnsurePath(path string, noLastDir bool) (string, error) {
+	ary := strings.Split(path, "/")
+	nonEmpty := []string{}
+	for i, dir := range ary {
+		if i > 0 && dir == "" {
+			continue
+		}
+		nonEmpty = append(nonEmpty, dir)
+	}
+	path = strings.Join(nonEmpty, "/")
+	var createPath string
+	if noLastDir {
+		createPath = strings.Join(nonEmpty[:len(nonEmpty)-1], "/")
+	} else {
+		createPath = path
+	}
+	return path, os.MkdirAll(createPath, 0755)
 }
