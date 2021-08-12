@@ -8,7 +8,7 @@ GO_LINT=golint -set_exit_status
 GO_VET=go vet
 GO_IMPORTS=goimports -w
 GO_ERRCHECK=errcheck -asserts -ignore '[FS]?[Pp]rint*'
-GO_FILES=context.go email.go error.go es.go json.go log.go redacted.go request.go threads.go time.go utils.go uuid.go
+GO_FILES=context.go email.go error.go es.go json.go log.go mbox.go redacted.go request.go threads.go time.go utils.go uuid.go
 all: check build
 check: fmt lint imports vet errcheck
 lint: ${GO_FILES}

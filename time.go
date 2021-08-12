@@ -2,7 +2,6 @@ package ds
 
 import (
 	"fmt"
-	"regexp"
 	"strconv"
 	"strings"
 	"sync"
@@ -20,51 +19,6 @@ type DateCacheEntry struct {
 var (
 	parseDateCache    = map[string]DateCacheEntry{}
 	parseDateCacheMtx *sync.RWMutex
-	// LowerDayNames - downcased 3 letter US day names
-	LowerDayNames = map[string]struct{}{
-		"mon": {},
-		"tue": {},
-		"wed": {},
-		"thu": {},
-		"fri": {},
-		"sat": {},
-		"sun": {},
-	}
-	// LowerMonthNames - map lower month names
-	LowerMonthNames = map[string]string{
-		"jan": "Jan",
-		"feb": "Feb",
-		"mar": "Mar",
-		"apr": "Apr",
-		"may": "May",
-		"jun": "Jun",
-		"jul": "Jul",
-		"aug": "Aug",
-		"sep": "Sep",
-		"oct": "Oct",
-		"nov": "Nov",
-		"dec": "Dec",
-	}
-	// LowerFullMonthNames - map lower month names (full)
-	LowerFullMonthNames = map[string]string{
-		"january":   "Jan",
-		"february":  "Feb",
-		"march":     "Mar",
-		"april":     "Apr",
-		"may":       "May",
-		"june":      "Jun",
-		"july":      "Jul",
-		"august":    "Aug",
-		"september": "Sep",
-		"october":   "Oct",
-		"november":  "Nov",
-		"decdember": "Dec",
-	}
-	// SpacesRE - match 1 or more space characters
-	SpacesRE = regexp.MustCompile(`\s+`)
-	// TZOffsetRE - time zone offset that comes after +0... +1... -0... -1...
-	// Can be 3 disgits or 3 digits then whitespace and then anything
-	TZOffsetRE = regexp.MustCompile(`^(\d{3})(\s+.*$|$)`)
 	// DefaultDateFrom - default date from
 	DefaultDateFrom = time.Date(1970, 1, 1, 0, 0, 0, 0, time.UTC)
 )
