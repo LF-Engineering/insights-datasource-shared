@@ -33,6 +33,10 @@ var (
 	memCache    = map[string]*MemCacheEntry{}
 	// RawFields - standard raw fields
 	RawFields = []string{"metadata__updated_on", "metadata__timestamp", "origin", "tags", "uuid", "offset"}
+	// postprocCache validation cache
+	postprocCache = map[[3]string][2]string{}
+	// postprocCacheMtx - emails validation cache mutex
+	postprocCacheMtx *sync.RWMutex
 )
 
 // MemCacheEntry - single cache entry
@@ -289,9 +293,29 @@ func RedactEmail(in, suff string, forceSuff bool) string {
 // PostprocessNameUsername - check name field, if it is empty then copy from email (if not empty) or username (if not empty)
 // Then check name and username - it cannot contain email addess, if it does - replace a@domain with a-MISSING-NAME
 func PostprocessNameUsername(name, username, email string) (outName, outUsername string) {
+	if MT {
+		postprocCacheMtx.RLock()
+	}
+	data, ok := postprocCache[[3]string{name, username, email}]
+	if MT {
+		postprocCacheMtx.RUnlock()
+	}
+	if ok {
+		outName = data[0]
+		outUsername = data[1]
+		return
+	}
+	inName, inUsername, inEmail := name, username, email
 	defer func() {
 		outName = name
 		outUsername = username
+		if MT {
+			postprocCacheMtx.Lock()
+		}
+		postprocCache[[3]string{inName, inUsername, inEmail}] = [2]string{outName, outUsername}
+		if MT {
+			postprocCacheMtx.Unlock()
+		}
 	}()
 	copiedName := false
 	if name == "" || name == "none" {

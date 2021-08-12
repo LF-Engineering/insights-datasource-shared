@@ -23,6 +23,9 @@ func SetMT() {
 	if emailsCacheMtx == nil {
 		emailsCacheMtx = &sync.RWMutex{}
 	}
+	if postprocCacheMtx == nil {
+		postprocCacheMtx = &sync.RWMutex{}
+	}
 	if esCacheMtx == nil {
 		esCacheMtx = &sync.RWMutex{}
 	}
@@ -44,6 +47,7 @@ func ResetThreadsNum(ctx *Ctx) {
 	uuidsNonEmptyCacheMtx = nil
 	uuidsAffsCacheMtx = nil
 	emailsCacheMtx = nil
+	postprocCacheMtx = nil
 	esCacheMtx = nil
 	memCacheMtx = nil
 	parseDateCacheMtx = nil
