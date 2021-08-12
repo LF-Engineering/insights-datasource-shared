@@ -69,6 +69,7 @@ func (ctx *Ctx) EnvSet(k string) bool {
 // InitEnv - initialize environment variables parser
 func (ctx *Ctx) InitEnv(dsName string) {
 	ctx.DS = dsName
+	dsName = strings.Replace(dsName, ".", "", -1)
 	ctx.DSEnv = strings.Replace(strings.ToUpper(dsName), " ", "_", -1) + "_"
 	ctx.DSFlag = strings.Replace(strings.ToLower(dsName), " ", "-", -1) + "-"
 }
