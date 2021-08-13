@@ -26,6 +26,10 @@ const (
 	MissingName = "-MISSING-NAME"
 	// RedactedEmail - common constant string
 	RedactedEmail = "-REDACTED-EMAIL"
+	// DefaultRateLimitHeader - default value for rate limit header
+	DefaultRateLimitHeader = "X-RateLimit-Remaining"
+	// DefaultRateLimitResetHeader - default value for rate limit reset header
+	DefaultRateLimitResetHeader = "X-RateLimit-Reset"
 )
 
 var (
