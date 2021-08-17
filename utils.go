@@ -7,6 +7,7 @@ import (
 	"math/rand"
 	"net/http"
 	"os"
+	"regexp"
 	"strconv"
 	"strings"
 	"sync"
@@ -362,4 +363,38 @@ func EnsurePath(path string, noLastDir bool) (string, error) {
 		createPath = path
 	}
 	return path, os.MkdirAll(createPath, 0755)
+}
+
+// MatchGroups - return regular expression matching groups as a map
+func MatchGroups(re *regexp.Regexp, arg string) (result map[string]string) {
+	match := re.FindStringSubmatch(arg)
+	result = make(map[string]string)
+	for i, name := range re.SubexpNames() {
+		if i > 0 && i <= len(match) {
+			result[name] = match[i]
+		}
+	}
+	return
+}
+
+// MatchGroupsArray - return regular expression matching groups as a map
+func MatchGroupsArray(re *regexp.Regexp, arg string) (result map[string][]string) {
+	match := re.FindAllStringSubmatch(arg, -1)
+	//Printf("match(%d,%d): %+v\n", len(match), len(re.SubexpNames()), match)
+	result = make(map[string][]string)
+	names := re.SubexpNames()
+	names = names[1:]
+	for idx, m := range match {
+		if idx == 0 {
+			for i, name := range names {
+				result[name] = []string{m[i+1]}
+			}
+			continue
+		}
+		for i, name := range names {
+			ary, _ := result[name]
+			result[name] = append(ary, m[i+1])
+		}
+	}
+	return
 }
