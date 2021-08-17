@@ -398,3 +398,16 @@ func MatchGroupsArray(re *regexp.Regexp, arg string) (result map[string][]string
 	}
 	return
 }
+
+// UniqueStringArray - make array unique
+func UniqueStringArray(ary []interface{}) []interface{} {
+	m := map[string]struct{}{}
+	for _, i := range ary {
+		m[i.(string)] = struct{}{}
+	}
+	ret := []interface{}{}
+	for i := range m {
+		ret = append(ret, i)
+	}
+	return ret
+}
