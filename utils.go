@@ -411,3 +411,12 @@ func UniqueStringArray(ary []interface{}) []interface{} {
 	}
 	return ret
 }
+
+// IndexAt - index of substring starting at a given position
+func IndexAt(s, sep string, n int) int {
+	idx := strings.Index(s[n:], sep)
+	if idx > -1 {
+		idx += n
+	}
+	return idx
+}
