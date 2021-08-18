@@ -57,11 +57,7 @@ func (c *ClientProvider) CreateDeliveryStream(channel string) error {
 		DeliveryStreamType: &deliveryType,
 	}
 	req, _ := c.firehose.CreateDeliveryStreamRequest(params)
-	err := req.Send()
-	if err != nil {
-		return err
-	}
-	return nil
+	return req.Send()
 }
 
 // PutRecordBatch is operation for Amazon Kinesis Firehose
