@@ -1,14 +1,18 @@
 package firehose
 
 import (
+	"context"
 	"encoding/json"
 	"errors"
+	"fmt"
 	"log"
 	"os"
 
-	"github.com/aws/aws-sdk-go/aws"
-	"github.com/aws/aws-sdk-go/aws/session"
-	"github.com/aws/aws-sdk-go/service/firehose"
+	"github.com/aws/aws-sdk-go-v2/service/firehose/types"
+
+	"github.com/aws/aws-sdk-go-v2/aws"
+	"github.com/aws/aws-sdk-go-v2/config"
+	"github.com/aws/aws-sdk-go-v2/service/firehose"
 )
 
 const (
@@ -24,13 +28,13 @@ type Config struct {
 
 // ClientProvider for kinesis firehose
 type ClientProvider struct {
-	firehose *firehose.Firehose
+	firehose *firehose.Client
 	region   string
 	endPoint string
 }
 
 // NewClientProvider initiate new client provider
-func NewClientProvider() *ClientProvider {
+func NewClientProvider() (*ClientProvider, error) {
 	c := &ClientProvider{}
 	c.region = os.Getenv(region)
 	if c.region == "" {
@@ -41,23 +45,41 @@ func NewClientProvider() *ClientProvider {
 	if os.Getenv("LOCALSTACK_HOSTNAME") != "" {
 		c.endPoint = os.Getenv("LOCALSTACK_HOSTNAME")
 	}
-	sess := session.Must(session.NewSession())
-	c.firehose = firehose.New(sess, aws.NewConfig().WithRegion(c.region).WithEndpoint(c.endPoint))
 
-	return c
+	customResolver := aws.EndpointResolverFunc(func(service, region string) (aws.Endpoint, error) {
+		if c.endPoint != "" {
+			return aws.Endpoint{
+				URL:           fmt.Sprintf("http://%s:4566", c.endPoint),
+				SigningRegion: c.region,
+			}, nil
+		}
+
+		// returning EndpointNotFoundError will allow the service to fallback to it's default resolution
+		return aws.Endpoint{}, &aws.EndpointNotFoundError{}
+	})
+
+	cfg, err := config.LoadDefaultConfig(context.TODO(),
+		config.WithRegion(c.region),
+		config.WithEndpointResolver(customResolver),
+	)
+	if err != nil {
+		return nil, err
+	}
+	c.firehose = firehose.NewFromConfig(cfg)
+
+	return c, nil
 }
 
 // CreateDeliveryStream creating firehose delivery stream channel
 // You must provide channel name as required parameter
 // If channel created successfully it will return nil else it will return error
 func (c *ClientProvider) CreateDeliveryStream(channel string) error {
-	deliveryType := firehose.DeliveryStreamTypeDirectPut
 	params := &firehose.CreateDeliveryStreamInput{
 		DeliveryStreamName: aws.String(channel),
-		DeliveryStreamType: &deliveryType,
+		DeliveryStreamType: types.DeliveryStreamTypeDirectPut,
 	}
-	req, _ := c.firehose.CreateDeliveryStreamRequest(params)
-	return req.Send()
+	_, err := c.firehose.CreateDeliveryStream(context.Background(), params)
+	return err
 }
 
 // PutRecordBatch is operation for Amazon Kinesis Firehose
@@ -83,20 +105,20 @@ func (c *ClientProvider) CreateDeliveryStream(channel string) error {
 // Don't concatenate two or more base64 strings to form the data fields of your
 // records. Instead, concatenate the raw data, then perform base64 encoding.
 func (c *ClientProvider) PutRecordBatch(channel string, records []interface{}) (map[string]error, error) {
-	inputs := make([]*firehose.Record, 0)
+	inputs := make([]types.Record, 0)
 	for _, r := range records {
 		b, err := json.Marshal(r)
 		if err != nil {
 			return map[string]error{}, err
 		}
-		records = append(records, &firehose.Record{Data: b})
+		records = append(records, &types.Record{Data: b})
 	}
 
 	params := &firehose.PutRecordBatchInput{
 		DeliveryStreamName: aws.String(channel),
 		Records:            inputs,
 	}
-	recordBatch, err := c.firehose.PutRecordBatch(params)
+	recordBatch, err := c.firehose.PutRecordBatch(context.Background(), params)
 	if err != nil {
 		return map[string]error{}, err
 	}
@@ -143,9 +165,9 @@ func (c *ClientProvider) PutRecord(channel string, record interface{}) (string, 
 	}
 	params := &firehose.PutRecordInput{
 		DeliveryStreamName: aws.String(channel),
-		Record:             &firehose.Record{Data: b},
+		Record:             &types.Record{Data: b},
 	}
-	res, err := c.firehose.PutRecord(params)
+	res, err := c.firehose.PutRecord(context.Background(), params)
 	if err != nil {
 		return "", err
 	}
