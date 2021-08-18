@@ -27,9 +27,10 @@ func LoadConfig(isLocal bool) Config {
 		Region: r,
 	}
 	if isLocal {
-		if os.Getenv("LOCALSTACK_HOSTNAME") != "" {
-			cfg.Endpoint = os.Getenv("LOCALSTACK_HOSTNAME")
-		}
+		cfg.Endpoint = "http://localhost:4566/"
+		//if os.Getenv("LOCALSTACK_HOSTNAME") != "" {
+		//	cfg.Endpoint = os.Getenv("LOCALSTACK_HOSTNAME")
+		//}
 	}
 	return cfg
 }
