@@ -212,6 +212,11 @@ func DumpKeys(i interface{}) string {
 	return strings.Replace(fmt.Sprintf("%v", KeysOnly(i)), "map[]", "", -1)
 }
 
+// DumpPreview - dump interface structure, keys and truncated values preview
+func DumpPreview(i interface{}, l int) string {
+	return strings.Replace(fmt.Sprintf("%v", PreviewOnly(i, l)), "map[]", "", -1)
+}
+
 // PreviewOnly - return a corresponding interface with preview values
 func PreviewOnly(i interface{}, l int) (o interface{}) {
 	if i == nil {
