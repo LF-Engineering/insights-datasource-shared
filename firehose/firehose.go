@@ -104,13 +104,52 @@ func (c *ClientProvider) CreateDeliveryStream(channel string) error {
 // Don't concatenate two or more base64 strings to form the data fields of your
 // records. Instead, concatenate the raw data, then perform base64 encoding.
 func (c *ClientProvider) PutRecordBatch(channel string, records []interface{}) (map[string]error, error) {
+
+	results := make(map[string]error)
+	chunk := make([]interface{}, 0)
+	for record := range records {
+		b, err := json.Marshal(record)
+		if err != nil {
+			return map[string]error{}, err
+		}
+		recordSize := len(b)
+		if recordSize > 1020000 {
+			return map[string]error{}, errors.New("large record size found")
+		}
+		b, err = json.Marshal(chunk)
+		if err != nil {
+			return map[string]error{}, err
+		}
+		if len(b) < 3670016 || len(b) < 500 {
+			chunk = append(chunk, record)
+		} else {
+			results, err = c.postBatch(channel, chunk)
+			if err != nil {
+				return results, err
+			}
+			chunk = make([]interface{}, 0)
+			chunk = append(chunk, record)
+		}
+		if len(chunk) > 0 {
+			results, err = c.postBatch(channel, chunk)
+			if err != nil {
+				return results, err
+			}
+		}
+	}
+
+	return results, nil
+}
+
+func (c *ClientProvider) postBatch(channel string, records []interface{}) (map[string]error, error) {
+	results := make(map[string]error)
 	inputs := make([]types.Record, 0)
 	for _, r := range records {
 		b, err := json.Marshal(r)
 		if err != nil {
 			return map[string]error{}, err
 		}
-		records = append(records, &types.Record{Data: b})
+		inputs = append(inputs, types.Record{Data: b})
 	}
 
 	params := &firehose.PutRecordBatchInput{
@@ -122,7 +161,6 @@ func (c *ClientProvider) PutRecordBatch(channel string, records []interface{}) (
 		return map[string]error{}, err
 	}
 
-	results := make(map[string]error)
 	for _, res := range recordBatch.RequestResponses {
 		if res.RecordId != nil {
 			if res.ErrorMessage != nil && *res.ErrorMessage != "" {
@@ -131,7 +169,6 @@ func (c *ClientProvider) PutRecordBatch(channel string, records []interface{}) (
 				results[*res.RecordId] = nil
 			}
 		}
-
 	}
 	return results, nil
 }
@@ -161,6 +198,9 @@ func (c *ClientProvider) PutRecord(channel string, record interface{}) (string, 
 	b, err := json.Marshal(record)
 	if err != nil {
 		return "", err
+	}
+	if len(b) > 1020000 {
+		return "", errors.New("large record size")
 	}
 	params := &firehose.PutRecordInput{
 		DeliveryStreamName: aws.String(channel),
