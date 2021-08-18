@@ -1,4 +1,4 @@
-package ds
+package firehose
 
 import (
 	"github.com/aws/aws-sdk-go/aws"
@@ -17,7 +17,7 @@ type Config struct {
 	Region   string
 }
 
-func LoadConfig(isLocal bool) Config {
+func LoadConfig() *Config {
 	r := os.Getenv(region)
 	if r == "" {
 		log.Printf("No AWS Region found for env var AWS_REGION. setting defaultRegion=%s \n", defaultRegion)
@@ -26,13 +26,11 @@ func LoadConfig(isLocal bool) Config {
 	cfg := Config{
 		Region: r,
 	}
-	if isLocal {
-		cfg.Endpoint = "http://localhost:4566/"
-		//if os.Getenv("LOCALSTACK_HOSTNAME") != "" {
-		//	cfg.Endpoint = os.Getenv("LOCALSTACK_HOSTNAME")
-		//}
-	}
-	return cfg
+
+		if os.Getenv("LOCALSTACK_HOSTNAME") != "" {
+			cfg.Endpoint = os.Getenv("LOCALSTACK_HOSTNAME")
+		}
+	return &cfg
 }
 
 func PutRecordBatch(c Config, channel string, data []byte) (int64,error) {
