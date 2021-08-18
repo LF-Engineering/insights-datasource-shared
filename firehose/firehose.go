@@ -8,11 +8,10 @@ import (
 	"log"
 	"os"
 
-	"github.com/aws/aws-sdk-go-v2/service/firehose/types"
-
 	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/config"
 	"github.com/aws/aws-sdk-go-v2/service/firehose"
+	"github.com/aws/aws-sdk-go-v2/service/firehose/types"
 )
 
 const (
@@ -58,7 +57,7 @@ func NewClientProvider() (*ClientProvider, error) {
 		return aws.Endpoint{}, &aws.EndpointNotFoundError{}
 	})
 
-	cfg, err := config.LoadDefaultConfig(context.TODO(),
+	cfg, err := config.LoadDefaultConfig(context.Background(),
 		config.WithRegion(c.region),
 		config.WithEndpointResolver(customResolver),
 	)
