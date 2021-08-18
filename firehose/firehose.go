@@ -11,12 +11,12 @@ import (
 	"github.com/aws/aws-sdk-go/service/firehose"
 )
 
-
 const (
 	region        = "AWS_REGION"
 	defaultRegion = "us-east-1"
 )
 
+//Config aws configuration
 type Config struct {
 	Endpoint string
 	Region   string
@@ -50,15 +50,15 @@ func NewClientProvider() *ClientProvider {
 // CreateDeliveryStream creating firehose delivery stream channel
 // You must provide channel name as required parameter
 // If channel created successfully it will return nil else it will return error
-func (c *ClientProvider) CreateDeliveryStream(channel string)  error {
-   deliveryType := firehose.DeliveryStreamTypeDirectPut
+func (c *ClientProvider) CreateDeliveryStream(channel string) error {
+	deliveryType := firehose.DeliveryStreamTypeDirectPut
 	params := &firehose.CreateDeliveryStreamInput{
 		DeliveryStreamName: aws.String(channel),
-		DeliveryStreamType : &deliveryType,
+		DeliveryStreamType: &deliveryType,
 	}
 	req, _ := c.firehose.CreateDeliveryStreamRequest(params)
-	 err:=  req.Send()
-	if err !=nil{
+	err := req.Send()
+	if err != nil {
 		return err
 	}
 	return nil
@@ -147,7 +147,7 @@ func (c *ClientProvider) PutRecord(channel string, record interface{}) (string, 
 	}
 	params := &firehose.PutRecordInput{
 		DeliveryStreamName: aws.String(channel),
-		Record:            &firehose.Record{Data: b},
+		Record:             &firehose.Record{Data: b},
 	}
 	res, err := c.firehose.PutRecord(params)
 	if err != nil {
