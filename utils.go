@@ -425,3 +425,12 @@ func IndexAt(s, sep string, n int) int {
 	}
 	return idx
 }
+
+// PartitionString - partition a string to [pre-sep, sep, post-sep]
+func PartitionString(s string, sep string) [3]string {
+	parts := strings.SplitN(s, sep, 2)
+	if len(parts) == 1 {
+		return [3]string{parts[0], "", ""}
+	}
+	return [3]string{parts[0], sep, parts[1]}
+}
