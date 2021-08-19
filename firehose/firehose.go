@@ -167,34 +167,6 @@ func (c *ClientProvider) PutRecordBatch(channel string, records []interface{}) (
 	return res, nil
 }
 
-func (c *ClientProvider) send(channel string, records []interface{}) ([]*PutResponse, error) {
-	inputs := make([]types.Record, 0)
-	for _, r := range records {
-		b, err := json.Marshal(r)
-		if err != nil {
-			return []*PutResponse{}, err
-		}
-		inputs = append(inputs, types.Record{Data: b})
-	}
-
-	params := &firehose.PutRecordBatchInput{
-		DeliveryStreamName: aws.String(channel),
-		Records:            inputs,
-	}
-	recordBatch, err := c.firehose.PutRecordBatch(context.Background(), params)
-	if err != nil {
-		return []*PutResponse{}, err
-	}
-
-	var res []*PutResponse
-	for _, r := range recordBatch.RequestResponses {
-		if r.RecordId != nil {
-			res = append(res, &PutResponse{RecordID: *r.RecordId, Error: errors.New(*r.ErrorMessage)})
-		}
-	}
-	return res, nil
-}
-
 // PutRecord is operation for Amazon Kinesis Firehose.
 // Writes a single data record into an Amazon Kinesis Data Firehose delivery
 // stream.
@@ -234,6 +206,34 @@ func (c *ClientProvider) PutRecord(channel string, record interface{}) (*PutResp
 		return &PutResponse{}, err
 	}
 	return &PutResponse{RecordID: *res.RecordId, Error: nil}, nil
+}
+
+func (c *ClientProvider) send(channel string, records []interface{}) ([]*PutResponse, error) {
+	inputs := make([]types.Record, 0)
+	for _, r := range records {
+		b, err := json.Marshal(r)
+		if err != nil {
+			return []*PutResponse{}, err
+		}
+		inputs = append(inputs, types.Record{Data: b})
+	}
+
+	params := &firehose.PutRecordBatchInput{
+		DeliveryStreamName: aws.String(channel),
+		Records:            inputs,
+	}
+	recordBatch, err := c.firehose.PutRecordBatch(context.Background(), params)
+	if err != nil {
+		return []*PutResponse{}, err
+	}
+
+	var res []*PutResponse
+	for _, r := range recordBatch.RequestResponses {
+		if r.RecordId != nil {
+			res = append(res, &PutResponse{RecordID: *r.RecordId, Error: errors.New(*r.ErrorMessage)})
+		}
+	}
+	return res, nil
 }
 
 type chanPutResponse struct {
