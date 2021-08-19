@@ -224,7 +224,7 @@ func (ctx *Ctx) Init() {
 	}
 	catsAry := []string{}
 	ary = strings.Split(cats, ",")
-	for _, cat := range catsAry {
+	for _, cat := range ary {
 		cat := strings.TrimSpace(cat)
 		if cat != "" {
 			catsAry = append(catsAry, cat)
