@@ -19,7 +19,8 @@ vendor/
 
 # Others
 out
-
+.idea
+*runner_test.go
 .env
 
 # Sensitive files
