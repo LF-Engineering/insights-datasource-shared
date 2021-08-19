@@ -1,18 +1,11 @@
 package ds
 
 import (
-	"crypto/sha1"
-	"errors"
 	"fmt"
 	"strings"
 	"sync"
-	"unicode"
-	"unicode/utf8"
 
-	"github.com/LF-Engineering/dev-analytics-libraries/uuid"
-	"golang.org/x/text/runes"
-	"golang.org/x/text/transform"
-	"golang.org/x/text/unicode/norm"
+	"github.com/LF-Engineering/insights-datasource-shared/uuid"
 )
 
 var (
@@ -108,112 +101,4 @@ func UUIDAffs(ctx *Ctx, args ...string) (h string) {
 		h = ""
 	}
 	return
-}
-
-// ToUnicode converts string to unicode
-func ToUnicode(s string) (string, error) {
-	dst := make([]byte, len(s)+100)
-
-	t := transform.Chain(norm.NFD, runes.Remove(runes.In(unicode.Mn)), norm.NFC)
-	nDst, _, err := t.Transform(dst, []byte(s), true)
-	if err != nil {
-		return "", err
-	}
-	return string(dst[:nDst]), nil
-}
-
-// Generate uuid using sha1
-func Generate(args ...string) (string, error) {
-	for i := range args {
-		// strip spaces
-		args[i] = strings.TrimSpace(args[i])
-
-		// check empty args
-		if args[i] == "" {
-			return "", errors.New("args cannot be empty")
-		}
-	}
-
-	data := strings.Join(args, ":")
-
-	hash := sha1.New()
-	_, err := hash.Write([]byte(data))
-	if err != nil {
-		return "", err
-	}
-	hashed := fmt.Sprintf("%x", hash.Sum(nil))
-
-	return hashed, nil
-
-}
-
-// GenerateIdentity generates uuid related to user ex. userUUID
-func GenerateIdentity(source, email, name, username *string) (string, error) {
-
-	if source == nil || *source == "" {
-		return "", errors.New("source cannot be an empty string")
-	}
-
-	if (email == nil || *email == "") && (name == nil || *name == "") && (username == nil || *username == "") {
-		return "", errors.New("identity data cannot be None or empty")
-	}
-
-	args := make([]string, 4)
-	args[0] = *source
-
-	if email == nil || *email == "" {
-		args[1] = "none"
-	} else {
-		args[1] = *email
-	}
-
-	if name == nil || *name == "" {
-		args[2] = "none"
-	} else {
-		args[2] = *name
-	}
-
-	if username == nil || *username == "" {
-		args[3] = "none"
-	} else {
-		args[3] = *username
-	}
-
-	for i := range args {
-
-		output := ""
-		ss := args[i]
-		for len(ss) > 0 {
-			r, size := utf8.DecodeRuneInString(ss)
-			if unicode.IsSymbol(r) {
-				output += string(rune(ss[0]))
-			} else {
-				output += string(r)
-			}
-			ss = ss[size:]
-		}
-		args[i] = output
-
-		// strip spaces
-		args[i] = strings.TrimSpace(args[i])
-	}
-
-	data := strings.Join(args, ":")
-
-	// to unicode
-	output, err := ToUnicode(data)
-	if err != nil {
-		return "", err
-	}
-	data = strings.ToLower(output)
-
-	hash := sha1.New()
-	_, err = hash.Write([]byte(data))
-	if err != nil {
-		return "", err
-	}
-	hashed := fmt.Sprintf("%x", hash.Sum(nil))
-
-	return hashed, nil
-
 }
