@@ -4,14 +4,15 @@ import (
 	"crypto/sha1"
 	"errors"
 	"fmt"
-	"github.com/LF-Engineering/dev-analytics-libraries/uuid"
-	"golang.org/x/text/runes"
-	"golang.org/x/text/transform"
-	"golang.org/x/text/unicode/norm"
 	"strings"
 	"sync"
 	"unicode"
 	"unicode/utf8"
+
+	"github.com/LF-Engineering/dev-analytics-libraries/uuid"
+	"golang.org/x/text/runes"
+	"golang.org/x/text/transform"
+	"golang.org/x/text/unicode/norm"
 )
 
 var (
@@ -160,7 +161,7 @@ func GenerateIdentity(source, email, name, username *string) (string, error) {
 	args := make([]string, 4)
 	args[0] = *source
 
-	if email == nil  || *email == "" {
+	if email == nil || *email == "" {
 		args[1] = "none"
 	} else {
 		args[1] = *email
