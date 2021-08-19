@@ -25,6 +25,12 @@ type Config struct {
 	Region   string
 }
 
+// PutResponse per record
+type PutResponse struct {
+	RecordID string
+	Error    error
+}
+
 // ClientProvider for kinesis firehose
 type ClientProvider struct {
 	firehose *firehose.Client
@@ -103,51 +109,70 @@ func (c *ClientProvider) CreateDeliveryStream(channel string) error {
 //
 // Don't concatenate two or more base64 strings to form the data fields of your
 // records. Instead, concatenate the raw data, then perform base64 encoding.
-func (c *ClientProvider) PutRecordBatch(channel string, records []interface{}) (map[string]error, error) {
-
-	results := make(map[string]error)
+func (c *ClientProvider) PutRecordBatch(channel string, records []interface{}) ([]*PutResponse, error) {
+	ch := make(chan *chanPutResponse)
 	chunk := make([]interface{}, 0)
+	requestCounter := 0
 	for record := range records {
-		b, err := json.Marshal(record)
+		r, err := json.Marshal(record)
 		if err != nil {
-			return map[string]error{}, err
+			return []*PutResponse{}, err
 		}
-		recordSize := len(b)
-		if recordSize > 1020000 {
-			return map[string]error{}, errors.New("large record size found")
+		if len(r) > 1020000 {
+			return []*PutResponse{}, errors.New("record exceeded the limit of 1 mb")
 		}
-		b, err = json.Marshal(chunk)
+		chunkSize, err := json.Marshal(chunk)
 		if err != nil {
-			return map[string]error{}, err
+			return []*PutResponse{}, err
 		}
-		if len(b) < 3670016 || len(b) < 500 {
+		if (len(chunkSize)+len(r)) < 3670016 && len(chunk) < 500 {
 			chunk = append(chunk, record)
 		} else {
-			results, err = c.postBatch(channel, chunk)
-			if err != nil {
-				return results, err
-			}
+			requestCounter++
+			go func() {
+				result, err := c.send(channel, chunk)
+				if err != nil {
+					ch <- &chanPutResponse{Error: err}
+				}
+				ch <- &chanPutResponse{Result: result}
+			}()
+
 			chunk = make([]interface{}, 0)
 			chunk = append(chunk, record)
 		}
-		if len(chunk) > 0 {
-			results, err = c.postBatch(channel, chunk)
+	}
+
+	if len(chunk) > 0 {
+		requestCounter++
+		go func() {
+			result, err := c.send(channel, chunk)
 			if err != nil {
-				return results, err
+				ch <- &chanPutResponse{Error: err}
 			}
+			ch <- &chanPutResponse{Result: result}
+		}()
+	}
+
+	var res []*PutResponse
+	for i := 0; i < requestCounter; i++ {
+		select {
+		case r := <-ch:
+			if r.Error != nil {
+				return []*PutResponse{}, r.Error
+			}
+			res = append(res, r.Result...)
 		}
 	}
 
-	return results, nil
+	return res, nil
 }
 
-func (c *ClientProvider) postBatch(channel string, records []interface{}) (map[string]error, error) {
-	results := make(map[string]error)
+func (c *ClientProvider) send(channel string, records []interface{}) ([]*PutResponse, error) {
 	inputs := make([]types.Record, 0)
 	for _, r := range records {
 		b, err := json.Marshal(r)
 		if err != nil {
-			return map[string]error{}, err
+			return []*PutResponse{}, err
 		}
 		inputs = append(inputs, types.Record{Data: b})
 	}
@@ -158,19 +183,16 @@ func (c *ClientProvider) postBatch(channel string, records []interface{}) (map[s
 	}
 	recordBatch, err := c.firehose.PutRecordBatch(context.Background(), params)
 	if err != nil {
-		return map[string]error{}, err
+		return []*PutResponse{}, err
 	}
 
-	for _, res := range recordBatch.RequestResponses {
-		if res.RecordId != nil {
-			if res.ErrorMessage != nil && *res.ErrorMessage != "" {
-				results[*res.RecordId] = errors.New(*res.ErrorMessage)
-			} else {
-				results[*res.RecordId] = nil
-			}
+	var res []*PutResponse
+	for _, r := range recordBatch.RequestResponses {
+		if r.RecordId != nil {
+			res = append(res, &PutResponse{RecordID: *r.RecordId, Error: errors.New(*r.ErrorMessage)})
 		}
 	}
-	return results, nil
+	return res, nil
 }
 
 // PutRecord is operation for Amazon Kinesis Firehose.
@@ -194,22 +216,27 @@ func (c *ClientProvider) postBatch(channel string, records []interface{}) (map[s
 //
 // The PutRecord operation returns a RecordId, which is a unique string assigned
 // to each record.
-func (c *ClientProvider) PutRecord(channel string, record interface{}) (string, error) {
+func (c *ClientProvider) PutRecord(channel string, record interface{}) (*PutResponse, error) {
 	b, err := json.Marshal(record)
 	if err != nil {
-		return "", err
+		return &PutResponse{}, err
 	}
 	if len(b) > 1020000 {
-		return "", errors.New("large record size")
+		return &PutResponse{}, errors.New("record exceeded the limit of 1 mb")
 	}
+
 	params := &firehose.PutRecordInput{
 		DeliveryStreamName: aws.String(channel),
 		Record:             &types.Record{Data: b},
 	}
 	res, err := c.firehose.PutRecord(context.Background(), params)
 	if err != nil {
-		return "", err
+		return &PutResponse{}, err
 	}
+	return &PutResponse{RecordID: *res.RecordId, Error: nil}, nil
+}
 
-	return *res.RecordId, nil
+type chanPutResponse struct {
+	Result []*PutResponse
+	Error  error
 }

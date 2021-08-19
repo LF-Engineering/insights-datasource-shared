@@ -5,7 +5,7 @@ import (
 	"strings"
 	"sync"
 
-	"github.com/LF-Engineering/dev-analytics-libraries/uuid"
+	"github.com/LF-Engineering/insights-datasource-shared/uuid"
 )
 
 var (
