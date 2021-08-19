@@ -73,15 +73,15 @@ func MemCacheDeleteExpired(ctx *Ctx) {
 func MaybeMemCacheCleanup(ctx *Ctx) {
 	// chance for cache cleanup
 	if rand.Intn(100) < CacheCleanupProb {
-		go func() {
-			if MT {
+		if MT {
+			go func() {
 				memCacheMtx.Lock()
-			}
-			MemCacheDeleteExpired(ctx)
-			if MT {
+				MemCacheDeleteExpired(ctx)
 				memCacheMtx.Unlock()
-			}
-		}()
+			}()
+			return
+		}
+		MemCacheDeleteExpired(ctx)
 	}
 }
 
@@ -210,6 +210,11 @@ func Dig(iface interface{}, keys []string, fatal, silent bool) (v interface{}, o
 // DumpKeys - dump interface structure, but only keys, no values
 func DumpKeys(i interface{}) string {
 	return strings.Replace(fmt.Sprintf("%v", KeysOnly(i)), "map[]", "", -1)
+}
+
+// DumpPreview - dump interface structure, keys and truncated values preview
+func DumpPreview(i interface{}, l int) string {
+	return strings.Replace(fmt.Sprintf("%v", PreviewOnly(i, l)), "map[]", "", -1)
 }
 
 // PreviewOnly - return a corresponding interface with preview values
@@ -419,4 +424,13 @@ func IndexAt(s, sep string, n int) int {
 		idx += n
 	}
 	return idx
+}
+
+// PartitionString - partition a string to [pre-sep, sep, post-sep]
+func PartitionString(s string, sep string) [3]string {
+	parts := strings.SplitN(s, sep, 2)
+	if len(parts) == 1 {
+		return [3]string{parts[0], "", ""}
+	}
+	return [3]string{parts[0], sep, parts[1]}
 }
