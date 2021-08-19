@@ -17,23 +17,24 @@ const (
 // Ctx - environment context packed in structure
 // It gets configuration (named, say: xyz abc) from command line (--dsname-xyz-abc) or from env (DSNAME_XYZ_ABC), env value has higher priority than commandline flag
 type Ctx struct {
-	DS            string     // original data source name
-	DSEnv         string     // prefix for env variables: "abc xyz" -> "ABC_XYZ_"
-	DSFlag        string     // prefix for commanding flags: "abc xyz" -> "--abc-xyz"
-	Debug         int        // debug level: 0-no, 1-info, 2-verbose
-	Retry         int        // how many times retry failed operatins, default 5
-	ST            bool       // use single threaded version, false: use multi threaded version, default false
-	NCPUs         int        // set to override number of CPUs to run, this overwrites --st, default 0 (which means do not use it, use all CPU reported by go library)
-	NCPUsScale    float64    // scale number of CPUs, for example 2.0 will report number of cpus 2.0 the number of actually available CPUs
-	Tags          []string   // tags 'tag1,tag2,...,tagN'
-	DryRun        bool       // only output data to console
-	Project       string     // set project can be for example "ONAP"
-	ProjectFilter bool       // set project filter (normally you only specify project, if you add project-filter flag, DS will try to filter by this project on an actual data source level)
-	PackSize      int        // data sources are outputting events in packs - here you can specify pack size, default is 1000
-	ESURL         string     // set ES cluster URL (optional but rather recommended)
-	NoCache       bool       // do not cache *any* HTTP requests
-	DateFrom      *time.Time // date from (for resuming)
-	DateTo        *time.Time // date to (for limiting)
+	DS            string              // original data source name
+	DSEnv         string              // prefix for env variables: "abc xyz" -> "ABC_XYZ_"
+	DSFlag        string              // prefix for commanding flags: "abc xyz" -> "--abc-xyz"
+	Debug         int                 // debug level: 0-no, 1-info, 2-verbose
+	Retry         int                 // how many times retry failed operatins, default 5
+	ST            bool                // use single threaded version, false: use multi threaded version, default false
+	NCPUs         int                 // set to override number of CPUs to run, this overwrites --st, default 0 (which means do not use it, use all CPU reported by go library)
+	NCPUsScale    float64             // scale number of CPUs, for example 2.0 will report number of cpus 2.0 the number of actually available CPUs
+	Tags          []string            // tags 'tag1,tag2,...,tagN'
+	DryRun        bool                // only output data to console
+	Project       string              // set project can be for example "ONAP"
+	ProjectFilter bool                // set project filter (normally you only specify project, if you add project-filter flag, DS will try to filter by this project on an actual data source level)
+	PackSize      int                 // data sources are outputting events in packs - here you can specify pack size, default is 1000
+	ESURL         string              // set ES cluster URL (optional but rather recommended)
+	NoCache       bool                // do not cache *any* HTTP requests
+	Categories    map[string]struct{} // some data sources allow specifying categories, you can pass them with --dsname-categories 'category1,category2,...' flag, it will keep unique set of them.
+	DateFrom      *time.Time          // date from (for resuming)
+	DateTo        *time.Time          // date to (for limiting)
 }
 
 // Env - get env value using current DS prefix
@@ -92,6 +93,7 @@ func (ctx *Ctx) Init() {
 	flagNoCache := flag.Bool(ctx.DSFlag+"no-cache", false, "do *NOT* cache any HTTP requests")
 	flagDateFrom := flag.String(ctx.DSFlag+"date-from", "", "date-from (for resuming)")
 	flagDateTo := flag.String(ctx.DSFlag+"date-to", "", "date-to (for limiting)")
+	flagCategories := flag.String(ctx.DSFlag+"categories", "", "some data sources allow specifying categories, you can pass them with --dsname-categories 'category1,category2,...' flag, it will keep unique set of them.")
 	flag.Parse()
 
 	// Debug
@@ -210,6 +212,27 @@ func (ctx *Ctx) Init() {
 	projectFilter, present := ctx.BoolEnvSet("PROJECT_FILTER")
 	if present {
 		ctx.ProjectFilter = projectFilter
+	}
+
+	// Categories
+	cats := ""
+	if FlagPassed(ctx, "categories") && *flagCategories != "" {
+		cats = *flagCategories
+	}
+	if ctx.EnvSet("CATEGORIES") {
+		cats = ctx.Env("CATEGORIES")
+	}
+	catsAry := []string{}
+	ary = strings.Split(cats, ",")
+	for _, cat := range ary {
+		cat := strings.TrimSpace(cat)
+		if cat != "" {
+			catsAry = append(catsAry, cat)
+		}
+	}
+	ctx.Categories = make(map[string]struct{})
+	for _, cat := range catsAry {
+		ctx.Categories[cat] = struct{}{}
 	}
 
 	// ES URL
