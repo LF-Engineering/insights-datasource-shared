@@ -9,7 +9,7 @@ import (
 	jsoniter "github.com/json-iterator/go"
 )
 
-const cacheIndex = "sds-datasource-status"
+const cacheIndex = "datasource-status"
 
 // ESClientProvider used in connecting to ES server
 type ESClientProvider interface {
