@@ -6,6 +6,7 @@ import (
 	"regexp"
 	"strings"
 	"sync"
+	"time"
 )
 
 var (
@@ -57,11 +58,21 @@ func IsValidDomain(domain string) (valid bool) {
 			emailsCacheMtx.Unlock()
 		}
 	}()
-	mx, err := net.LookupMX(domain)
-	if err != nil || len(mx) == 0 {
-		return
+	for i := 0; i < 10; i++ {
+		mx, err := net.LookupMX(domain)
+		if err == nil && len(mx) > 0 {
+			valid = true
+			return
+		}
 	}
-	valid = true
+	for i := 1; i <= 3; i++ {
+		mx, err := net.LookupMX(domain)
+		if err == nil && len(mx) > 0 {
+			valid = true
+			return
+		}
+		time.Sleep(time.Duration(i) * time.Second)
+	}
 	return
 }
 
