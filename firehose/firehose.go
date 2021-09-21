@@ -17,6 +17,7 @@ import (
 const (
 	region        = "AWS_REGION"
 	defaultRegion = "us-east-1"
+	maxChunkSize  = 1020000
 )
 
 //Config aws configuration
@@ -59,7 +60,7 @@ func NewClientProvider() (*ClientProvider, error) {
 			}, nil
 		}
 
-		// returning EndpointNotFoundError will allow the service to fallback to it's default resolution
+		// returning EndpointNotFoundError will allow the service to fall back to its default resolution
 		return aws.Endpoint{}, &aws.EndpointNotFoundError{}
 	})
 
@@ -113,20 +114,33 @@ func (c *ClientProvider) PutRecordBatch(channel string, records []interface{}) (
 	ch := make(chan *chanPutResponse)
 	chunk := make([]interface{}, 0)
 	requestCounter := 0
-	for record := range records {
+	smallerChunks := make([][]byte, 0)
+	for _, record := range records {
 		r, err := json.Marshal(record)
 		if err != nil {
 			return []*PutResponse{}, err
 		}
-		if len(r) > 1020000 {
-			return []*PutResponse{}, errors.New("record exceeded the limit of 1 mb")
+		if len(r) > maxChunkSize {
+			smallerChunks = c.chunkSlice(r, maxChunkSize)
 		}
 		chunkSize, err := json.Marshal(chunk)
 		if err != nil {
 			return []*PutResponse{}, err
 		}
 		if (len(chunkSize)+len(r)) < 3670016 && len(chunk) < 500 {
-			chunk = append(chunk, record)
+			if len(smallerChunks) > 0 {
+				var smallChunk interface{}
+				for _, c := range smallerChunks {
+					err := json.Unmarshal(c, &smallChunk)
+					if err != nil {
+						return []*PutResponse{}, err
+					}
+					chunk = append(chunk, smallChunk)
+				}
+				// TODO: reset smallChunks slice to 0?
+			} else {
+				chunk = append(chunk, record)
+			}
 		} else {
 			requestCounter++
 			go func() {
@@ -165,6 +179,22 @@ func (c *ClientProvider) PutRecordBatch(channel string, records []interface{}) (
 	}
 
 	return res, nil
+}
+
+// chunkSlice creates small chunks that are less than or equal to 1 MB
+func (c *ClientProvider) chunkSlice(slice []byte, chunkSize int) [][]byte {
+	var chunks [][]byte
+	for i := 0; i < len(slice); i += chunkSize {
+		end := i + chunkSize
+
+		if end > len(slice) {
+			end = len(slice)
+		}
+
+		chunks = append(chunks, slice[i:end])
+	}
+
+	return chunks
 }
 
 // PutRecord is operation for Amazon Kinesis Firehose.
@@ -227,10 +257,15 @@ func (c *ClientProvider) send(channel string, records []interface{}) ([]*PutResp
 		return []*PutResponse{}, err
 	}
 
-	var res []*PutResponse
+	res := make([]*PutResponse, 0)
 	for _, r := range recordBatch.RequestResponses {
+		var err error
+		if r.ErrorMessage != nil {
+			err = errors.New(*r.ErrorMessage)
+		}
+
 		if r.RecordId != nil {
-			res = append(res, &PutResponse{RecordID: *r.RecordId, Error: errors.New(*r.ErrorMessage)})
+			res = append(res, &PutResponse{RecordID: *r.RecordId, Error: err})
 		}
 	}
 	return res, nil
