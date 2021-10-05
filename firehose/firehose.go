@@ -132,6 +132,7 @@ func (c *ClientProvider) PutRecordBatch(channel string, records []interface{}) (
 		return []*PutResponse{}, err
 	}
 	for _, chunk := range chunks {
+		chunk := chunk
 		go func() {
 			result, err := c.send(channel, chunk)
 			if err != nil {
