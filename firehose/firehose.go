@@ -18,6 +18,7 @@ import (
 const (
 	region        = "AWS_REGION"
 	defaultRegion = "us-east-1"
+	maxChunkSize  = 1020000
 )
 
 //Config aws configuration
@@ -60,7 +61,7 @@ func NewClientProvider() (*ClientProvider, error) {
 			}, nil
 		}
 
-		// returning EndpointNotFoundError will allow the service to fallback to it's default resolution
+		// returning EndpointNotFoundError will allow the service to fall back to its default resolution
 		return aws.Endpoint{}, &aws.EndpointNotFoundError{}
 	})
 
@@ -126,7 +127,7 @@ func (c *ClientProvider) PutRecordBatch(channel string, records []interface{}) (
 		return result, nil
 	}
 
-	chunks, err := spiltRecord(records)
+	chunks, err := spiltRecords(records)
 	if err != nil {
 		return []*PutResponse{}, err
 	}

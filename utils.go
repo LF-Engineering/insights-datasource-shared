@@ -12,6 +12,8 @@ import (
 	"strings"
 	"sync"
 	"time"
+
+	jsoniter "github.com/json-iterator/go"
 )
 
 const (
@@ -433,4 +435,24 @@ func PartitionString(s string, sep string) [3]string {
 		return [3]string{parts[0], "", ""}
 	}
 	return [3]string{parts[0], sep, parts[1]}
+}
+
+// PrettyPrint - print any data as json
+func PrettyPrint(data interface{}) string {
+	j := jsoniter.Config{SortMapKeys: true, EscapeHTML: true}.Froze()
+	pretty, err := j.MarshalIndent(data, "", "  ")
+	if err != nil {
+		return fmt.Sprintf("%T: %+v", data, data)
+	}
+	return string(pretty)
+}
+
+// AsJSON - print any data as json
+func AsJSON(data interface{}) string {
+	j := jsoniter.Config{SortMapKeys: true, EscapeHTML: false}.Froze()
+	pretty, err := j.Marshal(data)
+	if err != nil {
+		return fmt.Sprintf("%T: %+v", data, data)
+	}
+	return string(pretty)
 }
