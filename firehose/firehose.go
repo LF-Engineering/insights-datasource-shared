@@ -6,6 +6,7 @@ import (
 	"errors"
 	"fmt"
 	"log"
+	"math"
 	"os"
 
 	"github.com/aws/aws-sdk-go-v2/aws"
@@ -111,39 +112,25 @@ func (c *ClientProvider) CreateDeliveryStream(channel string) error {
 // records. Instead, concatenate the raw data, then perform base64 encoding.
 func (c *ClientProvider) PutRecordBatch(channel string, records []interface{}) ([]*PutResponse, error) {
 	ch := make(chan *chanPutResponse)
-	chunk := make([]interface{}, 0)
-	requestCounter := 0
-	for record := range records {
-		r, err := json.Marshal(record)
-		if err != nil {
-			return []*PutResponse{}, err
-		}
-		if len(r) > 1020000 {
-			return []*PutResponse{}, errors.New("record exceeded the limit of 1 mb")
-		}
-		chunkSize, err := json.Marshal(chunk)
-		if err != nil {
-			return []*PutResponse{}, err
-		}
-		if (len(chunkSize)+len(r)) < 3670016 && len(chunk) < 500 {
-			chunk = append(chunk, record)
-		} else {
-			requestCounter++
-			go func() {
-				result, err := c.send(channel, chunk)
-				if err != nil {
-					ch <- &chanPutResponse{Error: err}
-				}
-				ch <- &chanPutResponse{Result: result}
-			}()
 
-			chunk = make([]interface{}, 0)
-			chunk = append(chunk, record)
-		}
+	r, err := json.Marshal(records)
+	if err != nil {
+		return []*PutResponse{}, err
 	}
 
-	if len(chunk) > 0 {
-		requestCounter++
+	if len(r) < 1020000 {
+		result, err := c.send(channel, records)
+		if err != nil {
+			return []*PutResponse{}, err
+		}
+		return result, nil
+	}
+
+	chunks, err := spiltRecord(records)
+	if err != nil {
+		return []*PutResponse{}, err
+	}
+	for _, chunk := range chunks {
 		go func() {
 			result, err := c.send(channel, chunk)
 			if err != nil {
@@ -154,7 +141,7 @@ func (c *ClientProvider) PutRecordBatch(channel string, records []interface{}) (
 	}
 
 	var res []*PutResponse
-	for i := 0; i < requestCounter; i++ {
+	for i := 0; i < len(chunks); i++ {
 		select {
 		case r := <-ch:
 			if r.Error != nil {
@@ -165,6 +152,50 @@ func (c *ClientProvider) PutRecordBatch(channel string, records []interface{}) (
 	}
 
 	return res, nil
+}
+
+func spiltRecord(records []interface{}) ([][]interface{}, error) {
+	chunks := make([][]interface{}, 0)
+	spiltIndex := int(math.Floor(float64(len(records)) / 2))
+	slice1 := records[0:spiltIndex]
+	slice1Size, err := size(slice1)
+	if err != nil {
+		return [][]interface{}{}, err
+	}
+	if slice1Size < 1020000 {
+		chunks = append(chunks, slice1)
+	} else {
+		slice1Chunks, err := spiltRecord(slice1)
+		if err != nil {
+			return [][]interface{}{}, err
+		}
+		chunks = append(chunks, slice1Chunks...)
+	}
+	slice2 := records[spiltIndex:]
+	slice2Size, err := size(slice1)
+	if err != nil {
+		return [][]interface{}{}, err
+	}
+	if slice2Size < 1020000 {
+		chunks = append(chunks, slice2)
+	} else {
+		slice2Chunks, err := spiltRecord(slice2)
+		if err != nil {
+			return [][]interface{}{}, err
+		}
+		chunks = append(chunks, slice2Chunks...)
+	}
+
+	return chunks, nil
+}
+
+func size(records []interface{}) (int, error) {
+	r, err := json.Marshal(records)
+	if err != nil {
+		return 0, err
+	}
+
+	return len(r), nil
 }
 
 // PutRecord is operation for Amazon Kinesis Firehose.
