@@ -195,7 +195,7 @@ func (c *ClientProvider) PutRecord(channel string, record interface{}) (*PutResp
 	return &PutResponse{RecordID: *res.RecordId, Error: nil}, nil
 }
 
-func spiltRecord(records []interface{}) ([][]interface{}, error) {
+func spiltRecords(records []interface{}) ([][]interface{}, error) {
 	chunks := make([][]interface{}, 0)
 	spiltIndex := int(math.Floor(float64(len(records)) / 2))
 	slice1 := records[0:spiltIndex]
@@ -206,7 +206,7 @@ func spiltRecord(records []interface{}) ([][]interface{}, error) {
 	if slice1Size < 1020000 {
 		chunks = append(chunks, slice1)
 	} else {
-		slice1Chunks, err := spiltRecord(slice1)
+		slice1Chunks, err := spiltRecords(slice1)
 		if err != nil {
 			return [][]interface{}{}, err
 		}
@@ -220,7 +220,7 @@ func spiltRecord(records []interface{}) ([][]interface{}, error) {
 	if slice2Size < 1020000 {
 		chunks = append(chunks, slice2)
 	} else {
-		slice2Chunks, err := spiltRecord(slice2)
+		slice2Chunks, err := spiltRecords(slice2)
 		if err != nil {
 			return [][]interface{}{}, err
 		}
