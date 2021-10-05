@@ -154,6 +154,47 @@ func (c *ClientProvider) PutRecordBatch(channel string, records []interface{}) (
 	return res, nil
 }
 
+// PutRecord is operation for Amazon Kinesis Firehose.
+// Writes a single data record into an Amazon Kinesis Data Firehose delivery
+// stream.
+//
+// By default, each delivery stream can take in up to 2,000 transactions per
+// second, 5,000 records per second, or 5 MB per second.
+//
+// You must specify the name of the delivery stream and the data record when
+// using PutRecord. The data record consists of a data blob that can be up to
+// 1,000 KB in size, and any kind of data. You must specify the name of the delivery stream and the data record when
+// using PutRecord. The data record consists of a data blob that can be up to
+// 1,000 KB in size, and any kind of data.
+//
+// Kinesis Data Firehose buffers records before delivering them to the destination.
+// To disambiguate the data blobs at the destination, a common solution is to
+// use delimiters in the data, such as a newline (\n) or some other character
+// unique within the data. This allows the consumer application to parse individual
+// data items when reading the data from the destination.
+//
+// The PutRecord operation returns a RecordId, which is a unique string assigned
+// to each record.
+func (c *ClientProvider) PutRecord(channel string, record interface{}) (*PutResponse, error) {
+	b, err := json.Marshal(record)
+	if err != nil {
+		return &PutResponse{}, err
+	}
+	if len(b) > 1020000 {
+		return &PutResponse{}, errors.New("record exceeded the limit of 1 mb")
+	}
+
+	params := &firehose.PutRecordInput{
+		DeliveryStreamName: aws.String(channel),
+		Record:             &types.Record{Data: b},
+	}
+	res, err := c.firehose.PutRecord(context.Background(), params)
+	if err != nil {
+		return &PutResponse{}, err
+	}
+	return &PutResponse{RecordID: *res.RecordId, Error: nil}, nil
+}
+
 func spiltRecord(records []interface{}) ([][]interface{}, error) {
 	chunks := make([][]interface{}, 0)
 	spiltIndex := int(math.Floor(float64(len(records)) / 2))
@@ -196,47 +237,6 @@ func size(records []interface{}) (int, error) {
 	}
 
 	return len(r), nil
-}
-
-// PutRecord is operation for Amazon Kinesis Firehose.
-// Writes a single data record into an Amazon Kinesis Data Firehose delivery
-// stream.
-//
-// By default, each delivery stream can take in up to 2,000 transactions per
-// second, 5,000 records per second, or 5 MB per second.
-//
-// You must specify the name of the delivery stream and the data record when
-// using PutRecord. The data record consists of a data blob that can be up to
-// 1,000 KB in size, and any kind of data. You must specify the name of the delivery stream and the data record when
-// using PutRecord. The data record consists of a data blob that can be up to
-// 1,000 KB in size, and any kind of data.
-//
-// Kinesis Data Firehose buffers records before delivering them to the destination.
-// To disambiguate the data blobs at the destination, a common solution is to
-// use delimiters in the data, such as a newline (\n) or some other character
-// unique within the data. This allows the consumer application to parse individual
-// data items when reading the data from the destination.
-//
-// The PutRecord operation returns a RecordId, which is a unique string assigned
-// to each record.
-func (c *ClientProvider) PutRecord(channel string, record interface{}) (*PutResponse, error) {
-	b, err := json.Marshal(record)
-	if err != nil {
-		return &PutResponse{}, err
-	}
-	if len(b) > 1020000 {
-		return &PutResponse{}, errors.New("record exceeded the limit of 1 mb")
-	}
-
-	params := &firehose.PutRecordInput{
-		DeliveryStreamName: aws.String(channel),
-		Record:             &types.Record{Data: b},
-	}
-	res, err := c.firehose.PutRecord(context.Background(), params)
-	if err != nil {
-		return &PutResponse{}, err
-	}
-	return &PutResponse{RecordID: *res.RecordId, Error: nil}, nil
 }
 
 func (c *ClientProvider) send(channel string, records []interface{}) ([]*PutResponse, error) {
