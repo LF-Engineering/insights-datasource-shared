@@ -114,12 +114,12 @@ func (c *ClientProvider) CreateDeliveryStream(channel string) error {
 func (c *ClientProvider) PutRecordBatch(channel string, records []interface{}) ([]*PutResponse, error) {
 	ch := make(chan *chanPutResponse)
 
-	r, err := json.Marshal(records)
+	recordSize, err := size(records)
 	if err != nil {
 		return []*PutResponse{}, err
 	}
 
-	if len(r) < maxChunkSize {
+	if recordSize < maxChunkSize {
 		result, err := c.send(channel, records)
 		if err != nil {
 			return []*PutResponse{}, err
@@ -182,7 +182,7 @@ func (c *ClientProvider) PutRecord(channel string, record interface{}) (*PutResp
 	if err != nil {
 		return &PutResponse{}, err
 	}
-	if len(b) > 1020000 {
+	if len(b) > maxChunkSize {
 		return &PutResponse{}, errors.New("record exceeded the limit of 1 mb")
 	}
 
@@ -205,7 +205,7 @@ func spiltRecords(records []interface{}) ([][]interface{}, error) {
 	if err != nil {
 		return [][]interface{}{}, err
 	}
-	if slice1Size < 1020000 {
+	if slice1Size < maxChunkSize {
 		chunks = append(chunks, slice1)
 	} else {
 		slice1Chunks, err := spiltRecords(slice1)
@@ -219,7 +219,7 @@ func spiltRecords(records []interface{}) ([][]interface{}, error) {
 	if err != nil {
 		return [][]interface{}{}, err
 	}
-	if slice2Size < 1020000 {
+	if slice2Size < maxChunkSize {
 		chunks = append(chunks, slice2)
 	} else {
 		slice2Chunks, err := spiltRecords(slice2)
