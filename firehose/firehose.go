@@ -6,6 +6,7 @@ import (
 	"errors"
 	"fmt"
 	"log"
+	"math"
 	"os"
 
 	"github.com/aws/aws-sdk-go-v2/aws"
@@ -112,52 +113,26 @@ func (c *ClientProvider) CreateDeliveryStream(channel string) error {
 // records. Instead, concatenate the raw data, then perform base64 encoding.
 func (c *ClientProvider) PutRecordBatch(channel string, records []interface{}) ([]*PutResponse, error) {
 	ch := make(chan *chanPutResponse)
-	chunk := make([]interface{}, 0)
-	requestCounter := 0
-	smallerChunks := make([][]byte, 0)
-	for _, record := range records {
-		r, err := json.Marshal(record)
-		if err != nil {
-			return []*PutResponse{}, err
-		}
-		if len(r) > maxChunkSize {
-			smallerChunks = c.chunkSlice(r, maxChunkSize)
-		}
-		chunkSize, err := json.Marshal(chunk)
-		if err != nil {
-			return []*PutResponse{}, err
-		}
-		if (len(chunkSize)+len(r)) < 3670016 && len(chunk) < 500 {
-			if len(smallerChunks) > 0 {
-				var smallChunk interface{}
-				for _, c := range smallerChunks {
-					err := json.Unmarshal(c, &smallChunk)
-					if err != nil {
-						return []*PutResponse{}, err
-					}
-					chunk = append(chunk, smallChunk)
-				}
-				// TODO: reset smallChunks slice to 0?
-			} else {
-				chunk = append(chunk, record)
-			}
-		} else {
-			requestCounter++
-			go func() {
-				result, err := c.send(channel, chunk)
-				if err != nil {
-					ch <- &chanPutResponse{Error: err}
-				}
-				ch <- &chanPutResponse{Result: result}
-			}()
 
-			chunk = make([]interface{}, 0)
-			chunk = append(chunk, record)
-		}
+	recordSize, err := size(records)
+	if err != nil {
+		return []*PutResponse{}, err
 	}
 
-	if len(chunk) > 0 {
-		requestCounter++
+	if recordSize < maxChunkSize {
+		result, err := c.send(channel, records)
+		if err != nil {
+			return []*PutResponse{}, err
+		}
+		return result, nil
+	}
+
+	chunks, err := spiltRecords(records)
+	if err != nil {
+		return []*PutResponse{}, err
+	}
+	for _, chunk := range chunks {
+		chunk := chunk
 		go func() {
 			result, err := c.send(channel, chunk)
 			if err != nil {
@@ -168,7 +143,7 @@ func (c *ClientProvider) PutRecordBatch(channel string, records []interface{}) (
 	}
 
 	var res []*PutResponse
-	for i := 0; i < requestCounter; i++ {
+	for i := 0; i < len(chunks); i++ {
 		select {
 		case r := <-ch:
 			if r.Error != nil {
@@ -179,22 +154,6 @@ func (c *ClientProvider) PutRecordBatch(channel string, records []interface{}) (
 	}
 
 	return res, nil
-}
-
-// chunkSlice creates small chunks that are less than or equal to 1 MB
-func (c *ClientProvider) chunkSlice(slice []byte, chunkSize int) [][]byte {
-	var chunks [][]byte
-	for i := 0; i < len(slice); i += chunkSize {
-		end := i + chunkSize
-
-		if end > len(slice) {
-			end = len(slice)
-		}
-
-		chunks = append(chunks, slice[i:end])
-	}
-
-	return chunks
 }
 
 // PutRecord is operation for Amazon Kinesis Firehose.
@@ -223,7 +182,7 @@ func (c *ClientProvider) PutRecord(channel string, record interface{}) (*PutResp
 	if err != nil {
 		return &PutResponse{}, err
 	}
-	if len(b) > 1020000 {
+	if len(b) > maxChunkSize {
 		return &PutResponse{}, errors.New("record exceeded the limit of 1 mb")
 	}
 
@@ -236,6 +195,50 @@ func (c *ClientProvider) PutRecord(channel string, record interface{}) (*PutResp
 		return &PutResponse{}, err
 	}
 	return &PutResponse{RecordID: *res.RecordId, Error: nil}, nil
+}
+
+func spiltRecords(records []interface{}) ([][]interface{}, error) {
+	chunks := make([][]interface{}, 0)
+	spiltIndex := int(math.Floor(float64(len(records)) / 2))
+	slice1 := records[0:spiltIndex]
+	slice1Size, err := size(slice1)
+	if err != nil {
+		return [][]interface{}{}, err
+	}
+	if slice1Size < maxChunkSize {
+		chunks = append(chunks, slice1)
+	} else {
+		slice1Chunks, err := spiltRecords(slice1)
+		if err != nil {
+			return [][]interface{}{}, err
+		}
+		chunks = append(chunks, slice1Chunks...)
+	}
+	slice2 := records[spiltIndex:]
+	slice2Size, err := size(slice1)
+	if err != nil {
+		return [][]interface{}{}, err
+	}
+	if slice2Size < maxChunkSize {
+		chunks = append(chunks, slice2)
+	} else {
+		slice2Chunks, err := spiltRecords(slice2)
+		if err != nil {
+			return [][]interface{}{}, err
+		}
+		chunks = append(chunks, slice2Chunks...)
+	}
+
+	return chunks, nil
+}
+
+func size(records []interface{}) (int, error) {
+	r, err := json.Marshal(records)
+	if err != nil {
+		return 0, err
+	}
+
+	return len(r), nil
 }
 
 func (c *ClientProvider) send(channel string, records []interface{}) ([]*PutResponse, error) {
@@ -257,15 +260,10 @@ func (c *ClientProvider) send(channel string, records []interface{}) ([]*PutResp
 		return []*PutResponse{}, err
 	}
 
-	res := make([]*PutResponse, 0)
+	var res []*PutResponse
 	for _, r := range recordBatch.RequestResponses {
-		var err error
-		if r.ErrorMessage != nil {
-			err = errors.New(*r.ErrorMessage)
-		}
-
 		if r.RecordId != nil {
-			res = append(res, &PutResponse{RecordID: *r.RecordId, Error: err})
+			res = append(res, &PutResponse{RecordID: *r.RecordId, Error: errors.New(*r.ErrorMessage)})
 		}
 	}
 	return res, nil
@@ -274,4 +272,55 @@ func (c *ClientProvider) send(channel string, records []interface{}) ([]*PutResp
 type chanPutResponse struct {
 	Result []*PutResponse
 	Error  error
+}
+
+// DescribeDeliveryStream
+// Describes the specified delivery stream and its status. For example, after your
+// delivery stream is created, call DescribeDeliveryStream to see whether the
+// delivery stream is ACTIVE and therefore ready for data to be sent to it. If the
+// status of a delivery stream is CREATING_FAILED, this status doesn't change, and
+// you can't invoke CreateDeliveryStream again on it. However, you can invoke the
+// DeleteDeliveryStream operation to delete it. If the status is DELETING_FAILED,
+// you can force deletion by invoking DeleteDeliveryStream again but with
+// DeleteDeliveryStreamInput$AllowForceDelete set to true.
+func (c *ClientProvider) DescribeDeliveryStream(channel string)  (*DescribeOutput, error){
+	params := firehose.DescribeDeliveryStreamInput{
+		DeliveryStreamName: &channel,
+	}
+
+	res, err := c.firehose.DescribeDeliveryStream(context.Background(), &params)
+	if err != nil {
+		return &DescribeOutput{}, err
+	}
+	return &DescribeOutput{StreamStatus: string(res.DeliveryStreamDescription.DeliveryStreamStatus) }, nil
+}
+
+// DescribeOutput ...
+type DescribeOutput struct {
+	StreamStatus string
+}
+
+// DeleteDeliveryStream ...
+// Deletes a delivery stream and its data. To check the state of a delivery stream,
+// use DescribeDeliveryStream. You can delete a delivery stream only if it is in
+// one of the following states: ACTIVE, DELETING, CREATING_FAILED, or
+// DELETING_FAILED. You can't delete a delivery stream that is in the CREATING
+// state. While the deletion request is in process, the delivery stream is in the
+// DELETING state. While the delivery stream is in the DELETING state, the service
+// might continue to accept records, but it doesn't make any guarantees with
+// respect to delivering the data. Therefore, as a best practice, first stop any
+// applications that are sending records before you delete a delivery stream.
+func (c *ClientProvider) DeleteDeliveryStream(channel string, force bool)  error{
+	params := firehose.DeleteDeliveryStreamInput{
+		DeliveryStreamName: &channel,
+	}
+	if force {
+		params.AllowForceDelete = &force
+	}
+
+	_, err := c.firehose.DeleteDeliveryStream(context.Background(), &params)
+	if err != nil {
+		return err
+	}
+	return nil
 }
