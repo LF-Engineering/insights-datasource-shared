@@ -119,7 +119,7 @@ func (c *ClientProvider) PutRecordBatch(channel string, records []interface{}) (
 		return []*PutResponse{}, err
 	}
 
-	if len(r) < 1020000 {
+	if len(r) < maxChunkSize {
 		result, err := c.send(channel, records)
 		if err != nil {
 			return []*PutResponse{}, err
@@ -272,4 +272,55 @@ func (c *ClientProvider) send(channel string, records []interface{}) ([]*PutResp
 type chanPutResponse struct {
 	Result []*PutResponse
 	Error  error
+}
+
+// DescribeDeliveryStream
+// Describes the specified delivery stream and its status. For example, after your
+// delivery stream is created, call DescribeDeliveryStream to see whether the
+// delivery stream is ACTIVE and therefore ready for data to be sent to it. If the
+// status of a delivery stream is CREATING_FAILED, this status doesn't change, and
+// you can't invoke CreateDeliveryStream again on it. However, you can invoke the
+// DeleteDeliveryStream operation to delete it. If the status is DELETING_FAILED,
+// you can force deletion by invoking DeleteDeliveryStream again but with
+// DeleteDeliveryStreamInput$AllowForceDelete set to true.
+func (c *ClientProvider) DescribeDeliveryStream(channel string)  (*DescribeOutput, error){
+	params := firehose.DescribeDeliveryStreamInput{
+		DeliveryStreamName: &channel,
+	}
+
+	res, err := c.firehose.DescribeDeliveryStream(context.Background(), &params)
+	if err != nil {
+		return &DescribeOutput{}, err
+	}
+	return &DescribeOutput{StreamStatus: string(res.DeliveryStreamDescription.DeliveryStreamStatus) }, nil
+}
+
+// DescribeOutput ...
+type DescribeOutput struct {
+	StreamStatus string
+}
+
+// DeleteDeliveryStream ...
+// Deletes a delivery stream and its data. To check the state of a delivery stream,
+// use DescribeDeliveryStream. You can delete a delivery stream only if it is in
+// one of the following states: ACTIVE, DELETING, CREATING_FAILED, or
+// DELETING_FAILED. You can't delete a delivery stream that is in the CREATING
+// state. While the deletion request is in process, the delivery stream is in the
+// DELETING state. While the delivery stream is in the DELETING state, the service
+// might continue to accept records, but it doesn't make any guarantees with
+// respect to delivering the data. Therefore, as a best practice, first stop any
+// applications that are sending records before you delete a delivery stream.
+func (c *ClientProvider) DeleteDeliveryStream(channel string, force bool)  error{
+	params := firehose.DeleteDeliveryStreamInput{
+		DeliveryStreamName: &channel,
+	}
+	if force {
+		params.AllowForceDelete = &force
+	}
+
+	_, err := c.firehose.DeleteDeliveryStream(context.Background(), &params)
+	if err != nil {
+		return err
+	}
+	return nil
 }
