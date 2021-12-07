@@ -263,7 +263,11 @@ func (c *ClientProvider) send(channel string, records []interface{}) ([]*PutResp
 	var res []*PutResponse
 	for _, r := range recordBatch.RequestResponses {
 		if r.RecordId != nil {
-			res = append(res, &PutResponse{RecordID: *r.RecordId, Error: errors.New(*r.ErrorMessage)})
+			response := &PutResponse{RecordID: *r.RecordId}
+			if r.ErrorMessage != nil {
+				response.Error = errors.New(*r.ErrorMessage)
+			}
+			res = append(res, response)
 		}
 	}
 	return res, nil
