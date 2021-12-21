@@ -91,12 +91,10 @@ type Organization struct {
 
 // Profile ...
 type Profile struct {
-	Email     *string `json:"email,omitempty"`
-	Gender    *string `json:"gender,omitempty"`
-	GenderAcc *int64  `json:"gender_acc,omitempty"`
-	IsBot     *int64  `json:"is_bot,omitempty"`
-	Name      *string `json:"name,omitempty"`
-	UUID      string  `json:"uuid,omitempty"`
+	Email *string `json:"email,omitempty"`
+	IsBot *int64  `json:"is_bot,omitempty"`
+	Name  *string `json:"name,omitempty"`
+	UUID  string  `json:"uuid,omitempty"`
 }
 
 // AffIdentity contains affiliation user Identity
@@ -107,8 +105,6 @@ type AffIdentity struct {
 	Username      string
 	Email         string
 	Domain        string
-	Gender        *string  `json:"gender"`
-	GenderACC     *int64   `json:"gender_acc"`
 	OrgName       *string  `json:"org_name"`
 	IsBot         *int64   `json:"is_bot"`
 	MultiOrgNames []string `json:"multi_org_names"`
