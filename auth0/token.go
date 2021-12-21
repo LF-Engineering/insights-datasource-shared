@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"github.com/LF-Engineering/insights-datasource-shared/elastic"
+
 	"github.com/dgrijalva/jwt-go"
 )
 
@@ -86,8 +87,13 @@ func (a *ClientProvider) GetToken() (string, error) {
 	}
 
 	// check token validity
-	ok, _, err := a.isValid(authToken)
-	if ok {
+	ok, _, err := a.isValid(authToken, false)
+	if err != nil {
+		log.Println(err)
+		return "", err
+	}
+
+	if ok && err == nil {
 		return authToken, nil
 	}
 
@@ -129,6 +135,7 @@ func (a *ClientProvider) generateToken() (string, error) {
 		}()
 		log.Println("Err: GenerateToken ", err)
 	}
+
 	go func() {
 		err = a.createLastActionDate()
 		log.Println(err)
@@ -141,7 +148,8 @@ func (a *ClientProvider) generateToken() (string, error) {
 	if result.AccessToken != "" {
 		log.Println("GenerateToken: Token generated successfully.")
 	}
-	ok, _, err := a.isValid(result.AccessToken)
+
+	ok, _, err := a.isValid(result.AccessToken, true)
 	if !ok || err != nil {
 		go func() {
 			errMsg := fmt.Sprintf("%s-%s: error validating the newly created token\n %s", a.appName, a.Environment, err)
@@ -214,13 +222,13 @@ var searchCacheQuery = map[string]interface{}{
 	},
 }
 
-func (a *ClientProvider) isValid(token string) (bool, jwt.MapClaims, error) {
+func (a *ClientProvider) isValid(token string, refreshJwks bool) (bool, jwt.MapClaims, error) {
 	p, err := jwt.Parse(token, func(t *jwt.Token) (interface{}, error) {
 		if _, ok := t.Method.(*jwt.SigningMethodRSA); !ok {
 			return nil, errors.New("unexpected signing method")
 		}
 
-		cert, err := a.getPemCert(t)
+		cert, err := a.getPemCert(t, refreshJwks)
 		if err != nil {
 			return nil, err
 		}
@@ -232,6 +240,7 @@ func (a *ClientProvider) isValid(token string) (bool, jwt.MapClaims, error) {
 
 		return key, nil
 	})
+
 	if err != nil {
 		return false, nil, err
 	}
@@ -242,47 +251,6 @@ func (a *ClientProvider) isValid(token string) (bool, jwt.MapClaims, error) {
 	}
 
 	return p.Valid, claims, err
-}
-
-// Jwks result from auth0 well know keys
-type Jwks struct {
-	Keys []JSONWebKeys `json:"keys"`
-}
-
-// JSONWebKeys auth0 token key
-type JSONWebKeys struct {
-	Kty string   `json:"kty"`
-	Kid string   `json:"kid"`
-	Use string   `json:"use"`
-	N   string   `json:"n"`
-	E   string   `json:"e"`
-	X5c []string `json:"x5c"`
-}
-
-func (a *ClientProvider) getPemCert(token *jwt.Token) (string, error) {
-	cert := ""
-	_, resp, err := a.httpClient.Request(fmt.Sprintf("%s/oauth/.well-known/jwks.json", a.AuthURL), "GET", nil, nil, nil)
-	if err != nil {
-		return cert, err
-	}
-
-	var jwks = Jwks{}
-	if err := json.Unmarshal(resp, &jwks); err != nil {
-		return cert, err
-	}
-
-	for _, k := range jwks.Keys {
-		if token.Header["kid"] == k.Kid {
-			cert = "-----BEGIN CERTIFICATE-----\n" + k.X5c[0] + "\n-----END CERTIFICATE-----"
-		}
-	}
-
-	if cert == "" {
-		err := errors.New("unable to find appropriate key")
-		return cert, err
-	}
-
-	return cert, nil
 }
 
 func (a *ClientProvider) createLastActionDate() error {
@@ -349,22 +317,28 @@ func (a *ClientProvider) RefreshToken() (RefreshResult, error) {
 	}
 
 	if authToken == "" || err != nil {
-		authToken, err = a.refreshCachedToken()
+		_, err = a.refreshCachedToken()
 		if err != nil {
 			return RefreshError, err
 		}
+
 		return RefreshSuccessful, nil
 	}
 
-	ok, claims, err := a.isValid(authToken)
+	ok, claims, err := a.isValid(authToken, false)
 	if ok && err == nil {
-		if claims.VerifyExpiresAt(time.Now().Add(60*time.Minute).Unix(), false) == false {
+		if !claims.VerifyExpiresAt(time.Now().Add(60*time.Minute).Unix(), false) {
+			if _, err := a.refreshCachedToken(); err != nil {
+				log.Printf("Error refresh auth0 token %s\n", err.Error())
+				return RefreshError, err
+			}
 			if _, err := a.refreshCachedToken(); err != nil {
 				log.Printf("Error refresh auth0 token %s\n", err.Error())
 				return RefreshError, err
 			}
 			return RefreshSuccessful, nil
 		}
+
 		return NotExpireSoon, nil
 	}
 
