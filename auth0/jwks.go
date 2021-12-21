@@ -44,47 +44,45 @@ func (a *ClientProvider) createAuthJwks(cert string) error {
 
 func (a *ClientProvider) getPemCert(token *jwt.Token, refreshJwks bool) (string, error) {
 	cert := ""
-	cert, expired, err := a.getCachedJwks()
+	cert, err := a.getCachedJwks()
 	if err != nil {
 		return cert, err
 	}
 
-	// check if the cache expired as well is not invoked via refresh token cron
-	if !expired && !refreshJwks {
-		return cert, nil
-	}
-
-	_, resp, err := a.httpClient.Request(fmt.Sprintf("%s/oauth/.well-known/jwks.json", a.AuthURL), "GET", nil, nil, nil)
-	if err != nil {
-		return cert, err
-	}
-
-	var jwks = Jwks{}
-	if err := json.Unmarshal(resp, &jwks); err != nil {
-		return cert, err
-	}
-
-	for _, k := range jwks.Keys {
-		if token.Header["kid"] == k.Kid {
-			cert = "-----BEGIN CERTIFICATE-----\n" + k.X5c[0] + "\n-----END CERTIFICATE-----"
+	// check if the refresh jwks cache flag coming from the refresh cron is set to true
+	if refreshJwks {
+		_, resp, err := a.httpClient.Request(fmt.Sprintf("%s/oauth/.well-known/jwks.json", a.AuthURL), "GET", nil, nil, nil)
+		if err != nil {
+			return cert, err
 		}
-	}
 
-	if cert == "" {
-		err := errors.New("unable to find appropriate key")
-		return cert, err
-	}
+		var jwks = Jwks{}
+		if err := json.Unmarshal(resp, &jwks); err != nil {
+			return cert, err
+		}
 
-	err = a.createAuthJwks(cert)
-	if err != nil {
-		return "", err
+		for _, k := range jwks.Keys {
+			if token.Header["kid"] == k.Kid {
+				cert = "-----BEGIN CERTIFICATE-----\n" + k.X5c[0] + "\n-----END CERTIFICATE-----"
+			}
+		}
+
+		if cert == "" {
+			err := errors.New("unable to find appropriate key")
+			return cert, err
+		}
+
+		err = a.createAuthJwks(cert)
+		if err != nil {
+			return "", err
+		}
+
 	}
 
 	return cert, nil
 }
 
-func (a *ClientProvider) getCachedJwks() (string, bool, error) {
-	expired := true
+func (a *ClientProvider) getCachedJwks() (string, error) {
 	res, err := a.esClient.Search(strings.TrimSpace(auth0JwksCache+a.Environment), searchJwksQuery)
 	if err != nil {
 		go func() {
@@ -93,27 +91,23 @@ func (a *ClientProvider) getCachedJwks() (string, bool, error) {
 			fmt.Println("Err: send to slack: ", err)
 		}()
 
-		return "", expired, err
+		return "", err
 	}
 
 	var e ESJwksSchema
 	err = json.Unmarshal(res, &e)
 	if err != nil {
 		log.Println("repository: GetOauthJwks: could not unmarshal the data", err)
-		return "", expired, err
+		return "", err
 	}
 
 	if len(e.Hits.Hits) > 0 {
 		data := e.Hits.Hits[0]
-		// compare current time v/s existing cached time + 30 mins
-		if data.Source.CreatedAt.Add(30*time.Minute).Unix() <= time.Now().UTC().Unix() {
-			expired = false
-		}
 
-		return data.Source.Jwks, expired, nil
+		return data.Source.Jwks, nil
 	}
 
-	return "", expired, errors.New("GetJwks: could not find the associated jwks")
+	return "", errors.New("GetJwks: could not find the associated jwks")
 }
 
 var searchJwksQuery = map[string]interface{}{

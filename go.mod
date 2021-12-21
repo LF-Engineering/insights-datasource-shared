@@ -3,7 +3,7 @@ module github.com/LF-Engineering/insights-datasource-shared
 go 1.15
 
 require (
-	github.com/LF-Engineering/dev-analytics-libraries v1.1.26
+	github.com/LF-Engineering/dev-analytics-libraries v1.1.28
 	github.com/avast/retry-go v3.0.0+incompatible
 	github.com/aws/aws-sdk-go v1.42.24
 	github.com/aws/aws-sdk-go-v2 v1.11.2
