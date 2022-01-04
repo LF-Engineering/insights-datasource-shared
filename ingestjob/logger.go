@@ -40,7 +40,7 @@ func NewLogger(esClient ESLogProvider, environment string) (*Logger, error) {
 }
 
 // Write ...
-func (s *Logger) Write(log Log) error {
+func (s *Logger) Write(log *Log) error {
 	if log.Datasource == "" || log.Endpoint == "" || log.CreatedAt.IsZero() {
 		return fmt.Errorf("error: log datasource, endpoint and created at are all required")
 	}
@@ -76,7 +76,7 @@ func (s *Logger) Write(log Log) error {
 		return err
 	}
 
-	return s.updateDocument(log, index, docID)
+	return s.updateDocument(*log, index, docID)
 }
 
 // Read ...
