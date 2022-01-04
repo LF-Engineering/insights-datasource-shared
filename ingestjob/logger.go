@@ -1,4 +1,4 @@
-package logging
+package ingestjob
 
 import (
 	"fmt"
@@ -9,7 +9,7 @@ import (
 )
 
 const (
-	logIndex   = "insights-task-logging"
+	logIndex   = "insights-job-logging"
 	inProgress = "inprogress"
 	failed     = "failed"
 	done       = "done"
@@ -20,17 +20,18 @@ type ESLogProvider interface {
 	CreateDocument(index, documentID string, body []byte) ([]byte, error)
 	Get(index string, query map[string]interface{}, result interface{}) error
 	UpdateDocument(index string, id string, body interface{}) ([]byte, error)
+	Count(index string, query map[string]interface{}) (int, error)
 }
 
-// LogProvider ...
-type LogProvider struct {
+// Logger ...
+type Logger struct {
 	esClient    ESLogProvider
 	environment string
 }
 
-// NewLogProvider ...
-func NewLogProvider(esClient ESLogProvider, environment string) (*LogProvider, error) {
-	logProvider := &LogProvider{
+// NewLogger ...
+func NewLogger(esClient ESLogProvider, environment string) (*Logger, error) {
+	logProvider := &Logger{
 		esClient:    esClient,
 		environment: environment,
 	}
@@ -38,8 +39,8 @@ func NewLogProvider(esClient ESLogProvider, environment string) (*LogProvider, e
 	return logProvider, nil
 }
 
-// StoreLog ...
-func (s *LogProvider) StoreLog(log Log) error {
+// Write ...
+func (s *Logger) Write(log Log) error {
 	if log.Datasource == "" || log.Endpoint == "" || log.CreatedAt.IsZero() {
 		return fmt.Errorf("error: log datasource, endpoint and created at are all required")
 	}
@@ -78,8 +79,12 @@ func (s *LogProvider) StoreLog(log Log) error {
 	return s.updateDocument(log, index, docID)
 }
 
-// PullLogs ...
-func (s *LogProvider) PullLogs(datasource string) ([]Log, error) {
+// Read ...
+func (s *Logger) Read(datasource string, status string) ([]Log, error) {
+	if status != inProgress && status != failed && status != done {
+		return []Log{}, fmt.Errorf("error: log status must be one of [%s, %s, %s ]", inProgress, failed, done)
+	}
+
 	must := make([]map[string]interface{}, 0)
 	must = append(must, map[string]interface{}{
 		"term": map[string]interface{}{
@@ -90,7 +95,7 @@ func (s *LogProvider) PullLogs(datasource string) ([]Log, error) {
 	must = append(must, map[string]interface{}{
 		"term": map[string]interface{}{
 			"status": map[string]string{
-				"value": inProgress},
+				"value": status},
 		},
 	})
 	query := map[string]interface{}{
@@ -115,7 +120,36 @@ func (s *LogProvider) PullLogs(datasource string) ([]Log, error) {
 	return logs, nil
 }
 
-func (s *LogProvider) updateDocument(log Log, index string, docID string) error {
+func (s *Logger) Count(datasource string, status string) (int, error) {
+	if status != inProgress && status != failed && status != done {
+		return 0, fmt.Errorf("error: log status must be one of [%s, %s, %s ]", inProgress, failed, done)
+	}
+
+	must := make([]map[string]interface{}, 0)
+	must = append(must, map[string]interface{}{
+		"term": map[string]interface{}{
+			"datasource": map[string]string{
+				"value": datasource},
+		},
+	})
+	must = append(must, map[string]interface{}{
+		"term": map[string]interface{}{
+			"status": map[string]string{
+				"value": status},
+		},
+	})
+	query := map[string]interface{}{
+		"query": map[string]interface{}{
+			"bool": map[string]interface{}{
+				"must": must,
+			},
+		},
+	}
+
+	return s.esClient.Count(fmt.Sprintf("%s-%s", logIndex, s.environment), query)
+}
+
+func (s *Logger) updateDocument(log Log, index string, docID string) error {
 	doc := map[string]interface{}{
 		"datasource": log.Datasource,
 		"endpoint":   log.Endpoint,
