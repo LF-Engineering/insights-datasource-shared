@@ -4,10 +4,12 @@ import "time"
 
 // Log ...
 type Log struct {
-	Datasource string    `json:"datasource"`
-	Endpoint   string    `json:"endpoint"`
-	Status     string    `json:"status"`
-	CreatedAt  time.Time `json:"created_at"`
+	Datasource  string    `json:"datasource"`
+	Endpoint    string    `json:"endpoint"`
+	Status      string    `json:"status"`
+	CreatedAt   time.Time `json:"created_at"`
+	ProjectSlug string    `json:"project_slug"`
+	Message     string    `json:"message"`
 }
 
 // TopHits result

@@ -48,7 +48,7 @@ func (s *LogProvider) StoreLog(log Log) error {
 	}
 
 	date := log.CreatedAt.Format(time.RFC3339)
-	docID, err := uuid.Generate(log.Datasource, log.Endpoint, log.Status, date)
+	docID, err := uuid.Generate(log.Datasource, log.Endpoint, date)
 	if err != nil {
 		return err
 	}
@@ -96,7 +96,7 @@ func (s *LogProvider) PullLogs(datasource string) ([]Log, error) {
 	query := map[string]interface{}{
 		"query": map[string]interface{}{
 			"bool": map[string]interface{}{
-				//"must": must,
+				"must": must,
 			},
 		},
 	}
