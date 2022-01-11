@@ -4,12 +4,13 @@ import "time"
 
 // Log ...
 type Log struct {
-	Datasource  string    `json:"datasource"`
-	Endpoint    string    `json:"endpoint"`
-	Status      string    `json:"status"`
-	CreatedAt   time.Time `json:"created_at"`
-	ProjectSlug string    `json:"project_slug"`
-	Message     string    `json:"message"`
+	Connector     string              `json:"connector"`
+	Configuration []map[string]string `json:"configuration"`
+	Status        string              `json:"status"`
+	CreatedAt     time.Time           `json:"created_at"`
+	UpdatedAt     time.Time           `json:"updated_at"`
+	ProjectSlug   string              `json:"project_slug"`
+	Message       string              `json:"message"`
 }
 
 // TopHits result

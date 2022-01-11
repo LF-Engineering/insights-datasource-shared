@@ -1,6 +1,7 @@
 package ingestjob
 
 import (
+	"encoding/json"
 	"fmt"
 	"time"
 
@@ -41,15 +42,19 @@ func NewLogger(esClient ESLogProvider, environment string) (*Logger, error) {
 
 // Write ...
 func (s *Logger) Write(log *Log) error {
-	if log.Datasource == "" || log.Endpoint == "" || log.CreatedAt.IsZero() {
-		return fmt.Errorf("error: log datasource, endpoint and created at are all required")
+	if log.Connector == "" || len(log.Configuration) == 0 || log.CreatedAt.IsZero() {
+		return fmt.Errorf("error: log connector, configuration and created at are all required")
 	}
 	if log.Status != inProgress && log.Status != failed && log.Status != done {
 		return fmt.Errorf("error: log status must be one of [%s, %s, %s ]", inProgress, failed, done)
 	}
 
 	date := log.CreatedAt.Format(time.RFC3339)
-	docID, err := uuid.Generate(log.Datasource, log.Endpoint, date)
+	configs, err := json.Marshal(log.Configuration)
+	if err != nil {
+		return err
+	}
+	docID, err := uuid.Generate(log.Connector, string(configs), date)
 	if err != nil {
 		return err
 	}
@@ -80,7 +85,7 @@ func (s *Logger) Write(log *Log) error {
 }
 
 // Read ...
-func (s *Logger) Read(datasource string, status string) ([]Log, error) {
+func (s *Logger) Read(connector string, status string) ([]Log, error) {
 	if status != inProgress && status != failed && status != done {
 		return []Log{}, fmt.Errorf("error: log status must be one of [%s, %s, %s ]", inProgress, failed, done)
 	}
@@ -88,8 +93,8 @@ func (s *Logger) Read(datasource string, status string) ([]Log, error) {
 	must := make([]map[string]interface{}, 0)
 	must = append(must, map[string]interface{}{
 		"term": map[string]interface{}{
-			"datasource": map[string]string{
-				"value": datasource},
+			"connector": map[string]string{
+				"value": connector},
 		},
 	})
 	must = append(must, map[string]interface{}{
@@ -120,7 +125,7 @@ func (s *Logger) Read(datasource string, status string) ([]Log, error) {
 	return logs, nil
 }
 
-func (s *Logger) Count(datasource string, status string) (int, error) {
+func (s *Logger) Count(connector string, status string) (int, error) {
 	if status != inProgress && status != failed && status != done {
 		return 0, fmt.Errorf("error: log status must be one of [%s, %s, %s ]", inProgress, failed, done)
 	}
@@ -128,8 +133,8 @@ func (s *Logger) Count(datasource string, status string) (int, error) {
 	must := make([]map[string]interface{}, 0)
 	must = append(must, map[string]interface{}{
 		"term": map[string]interface{}{
-			"datasource": map[string]string{
-				"value": datasource},
+			"connector": map[string]string{
+				"value": connector},
 		},
 	})
 	must = append(must, map[string]interface{}{
@@ -151,15 +156,14 @@ func (s *Logger) Count(datasource string, status string) (int, error) {
 
 func (s *Logger) updateDocument(log Log, index string, docID string) error {
 	doc := map[string]interface{}{
-		"datasource": log.Datasource,
-		"endpoint":   log.Endpoint,
-		"created_at": log.CreatedAt,
-		"status":     log.Status,
+		"connector":     log.Connector,
+		"configuration": log.Configuration,
+		"updated_at":    time.Now().UTC(),
+		"status":        log.Status,
 	}
 
 	_, err := s.esClient.UpdateDocument(index, docID, doc)
 	if err != nil {
-		fmt.Println(index)
 		return err
 	}
 	return nil
