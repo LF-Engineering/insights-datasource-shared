@@ -55,7 +55,7 @@ resource "aws_ecs_task_definition" "insights-connector-confluence-task" {
   task_role_arn = aws_iam_role.ecs_task_role.arn
   container_definitions = jsonencode([
     {
-      name      = "insights-connector-confuence"
+      name      = "insights-connector-confluence"
       image     = "395594542180.dkr.ecr.us-east-l.amazonaws.com/insights-connector-confluence:latest"
       cpu       = 128
       memory    = 512
