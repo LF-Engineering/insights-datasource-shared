@@ -13,7 +13,7 @@ jobs:
             terraform init && terraform plan -out tfapply \
             -var eg_aws_region=${AWS_REGION_ENV} \
             -var aws_secret_key=${AWS_SECRET_ACCESS_KEY_ENV_VAR} \
-            -var aws_access_key=${AWS_SECRET_ACCESS_KEY_ENV_VAR}
+            -var aws_access_key=${AWS_ACCESS_KEY_ID_ENV_VAR}
           working_directory: deploy
       - persist_to_workspace:
           root: .
