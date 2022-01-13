@@ -68,17 +68,23 @@ workflows:
       - deploy_test:
           filters:
             branches:
-              only: main
+              ignore: /.*/
+            tags:
+              only: /^v\d+(\.\d+)?(\.\d+)?$/
       - approve-prod:
           type: approval
           filters:
+            branches:
+              ignore: /.*/
             tags:
-              only: /.*/
+              only: /^v\d+(\.\d+)?(\.\d+)?$/
           requires:
             - terraform-plan
       - terraform-apply:
           filters:
+            branches:
+              ignore: /.*/
             tags:
-              only: /.*/
+              only: /^v\d+(\.\d+)?(\.\d+)?$/
           requires:
             - approve-prod
