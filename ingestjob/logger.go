@@ -11,9 +11,9 @@ import (
 
 const (
 	logIndex   = "insights-job-logging"
-	inProgress = "inprogress"
-	failed     = "failed"
-	done       = "done"
+	InProgress = "inprogress"
+	Failed     = "failed"
+	Done       = "done"
 )
 
 // ESLogProvider used in connecting to ES logging server
@@ -45,8 +45,8 @@ func (s *Logger) Write(log *Log) error {
 	if log.Connector == "" || len(log.Configuration) == 0 || log.CreatedAt.IsZero() {
 		return fmt.Errorf("error: log connector, configuration and created at are all required")
 	}
-	if log.Status != inProgress && log.Status != failed && log.Status != done {
-		return fmt.Errorf("error: log status must be one of [%s, %s, %s ]", inProgress, failed, done)
+	if log.Status != InProgress && log.Status != Failed && log.Status != Done {
+		return fmt.Errorf("error: log status must be one of [%s, %s, %s ]", InProgress, Failed, Done)
 	}
 
 	date := log.CreatedAt.Format(time.RFC3339)
@@ -86,8 +86,8 @@ func (s *Logger) Write(log *Log) error {
 
 // Read ...
 func (s *Logger) Read(connector string, status string) ([]Log, error) {
-	if status != inProgress && status != failed && status != done {
-		return []Log{}, fmt.Errorf("error: log status must be one of [%s, %s, %s ]", inProgress, failed, done)
+	if status != InProgress && status != Failed && status != Done {
+		return []Log{}, fmt.Errorf("error: log status must be one of [%s, %s, %s ]", InProgress, Failed, Done)
 	}
 
 	must := make([]map[string]interface{}, 0)
@@ -126,8 +126,8 @@ func (s *Logger) Read(connector string, status string) ([]Log, error) {
 }
 
 func (s *Logger) Count(connector string, status string) (int, error) {
-	if status != inProgress && status != failed && status != done {
-		return 0, fmt.Errorf("error: log status must be one of [%s, %s, %s ]", inProgress, failed, done)
+	if status != InProgress && status != Failed && status != Done {
+		return 0, fmt.Errorf("error: log status must be one of [%s, %s, %s ]", InProgress, Failed, Done)
 	}
 
 	must := make([]map[string]interface{}, 0)
