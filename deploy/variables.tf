@@ -7,5 +7,5 @@ variable "aws_secret_key" {
 }
 
 variable "eg_aws_region" {
-  description = "EG AWS region"
+  description = "AWS region"
 }
