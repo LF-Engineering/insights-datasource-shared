@@ -1,0 +1,84 @@
+version: 2
+
+jobs:
+  terraform-plan: &terraform-plan
+    working_directory: /project
+    docker:
+      - image: docker.mirror.hashicorp.services/hashicorp/terraform:light
+    steps:
+      - checkout
+      - run:
+          name: terraform init & plan
+          command: |
+            terraform init && terraform plan -out tfapply \
+            -var eg_aws_region=${AWS_REGION_ENV} \
+            -var aws_secret_key=${AWS_SECRET_ACCESS_KEY_ENV_VAR} \
+            -var aws_access_key=${AWS_SECRET_ACCESS_KEY_ENV_VAR}
+          working_directory: deploy
+      - persist_to_workspace:
+          root: .
+          paths:
+            - tfapply
+  terraform-apply: &terraform-apply
+    docker:
+      - image: docker.mirror.hashicorp.services/hashicorp/terraform:light
+    steps:
+      - checkout
+      - run:
+          name: terraform
+          command: |
+            pwd && terraform apply -auto-approve tfapply
+          working_directory: deploy
+  deploy: &deploy
+    <<: *terraform-plan
+    <<: *terraform-apply
+  deploy_dev:
+    <<: *deploy
+    environment:
+      AWS_ACCESS_KEY_ID_ENV_VAR: AWS_ACCESS_KEY_ID_DEV
+      AWS_SECRET_ACCESS_KEY_ENV_VAR: AWS_SECRET_ACCESS_KEY_DEV
+      AWS_REGION_ENV: AWS_REGION_DEV
+      STAGE: dev
+  deploy_test:
+    <<: *deploy
+    environment:
+      AWS_ACCESS_KEY_ID_ENV_VAR: AWS_ACCESS_KEY_ID_TEST
+      AWS_SECRET_ACCESS_KEY_ENV_VAR: AWS_SECRET_ACCESS_KEY_TEST
+      AWS_REGION_ENV: AWS_REGION_TEST
+      STAGE: test
+  deploy_prod:
+    <<: *deploy
+    filters:
+      tags:
+        only: /.*/
+    environment:
+      AWS_ACCESS_KEY_ID_ENV_VAR: AWS_ACCESS_KEY_ID_PROD
+      AWS_SECRET_ACCESS_KEY_ENV_VAR: AWS_SECRET_ACCESS_KEY_PROD
+      AWS_REGION_ENV: AWS_REGION_PROD
+      STAGE: prod
+workflows:
+  version: 2
+  plan_approve_apply:
+    jobs:
+      - terraform-plan
+      - deploy_dev:
+          filters:
+            branches:
+              only: main
+      - deploy_test:
+          filters:
+            branches:
+              only: main
+      - approve-prod:
+          type: approval
+          filters:
+            tags:
+              only: /.*/
+          requires:
+            - terraform-plan
+      - terraform-apply:
+          filters:
+            tags:
+              only: /.*/
+          requires:
+            - approve-prod
