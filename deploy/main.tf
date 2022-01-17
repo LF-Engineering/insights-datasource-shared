@@ -15,8 +15,8 @@ resource "aws_ecs_cluster" "insights-git-cluster" {
 }
 
 /* ECS task definitions */
-resource "aws_ecs_task_definition" "insights-git-task" {
-  family = "insights-git-task"
+resource "aws_ecs_task_definition" "insights-connector-git" {
+  family = "insights-connector-git"
   requires_compatibilities = ["FARGATE"]
   network_mode = "awsvpc"
   cpu = "256"
@@ -25,8 +25,8 @@ resource "aws_ecs_task_definition" "insights-git-task" {
   task_role_arn = aws_iam_role.ecs_task_role.arn
   container_definitions = jsonencode([
     {
-      name      = "insights-git"
-      image     = "linonymous/insights-git-binary:latest"
+      name      = "insights-connector-git"
+      image     = "395594542180.dkr.ecr.us-east-1.amazonaws.com/insights-git-connector:latest"
       cpu       = 128
       memory    = 512
       essential = true
@@ -43,7 +43,6 @@ resource "aws_ecs_task_definition" "insights-git-task" {
   ])
 
 }
-
 resource "aws_security_group" "security_group" {
   name        = "example-task-security-group"
   vpc_id      = aws_vpc.main.id

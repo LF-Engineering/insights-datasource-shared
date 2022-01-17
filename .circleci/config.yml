@@ -29,7 +29,7 @@ jobs:
       - run:
           name: terraform
           command: |
-            pwd && terraform apply -auto-approve tfapply
+            terraform apply -auto-approve tfapply
           working_directory: deploy
   deploy: &deploy
     <<: *terraform-plan
@@ -50,9 +50,6 @@ jobs:
       STAGE: test
   deploy_prod:
     <<: *deploy
-    filters:
-      tags:
-        only: /.*/
     environment:
       AWS_ACCESS_KEY_ID_ENV_VAR: AWS_ACCESS_KEY_ID_PROD
       AWS_SECRET_ACCESS_KEY_ENV_VAR: AWS_SECRET_ACCESS_KEY_PROD
@@ -82,7 +79,7 @@ workflows:
               only: /^v\d+(\.\d+)?(\.\d+)?$/
           requires:
             - terraform-plan
-      - terraform-apply:
+      - deploy_prod:
           filters:
             branches:
               ignore: /.*/
