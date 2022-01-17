@@ -64,12 +64,16 @@ workflows:
           filters:
             branches:
               only: main
+          requires:
+            - terraform-plan
       - deploy_test:
           filters:
             branches:
               ignore: /.*/
             tags:
               only: /^v\d+(\.\d+)?(\.\d+)?$/
+          requires:
+            - terraform-plan
       - approve-prod:
           type: approval
           filters:
