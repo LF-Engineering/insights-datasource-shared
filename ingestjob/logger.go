@@ -167,7 +167,11 @@ func (s *Logger) updateDocument(log Log, index string, docID string) error {
 	return nil
 }
 
+// Filter connector logs based on status, configuration and creation date
 func (s *Logger) Filter(log *Log) ([]Log, error) {
+	if log.Connector == "" {
+		return []Log{}, fmt.Errorf("error: log connector is required")
+	}
 	if log.Status != InProgress && log.Status != Failed && log.Status != Done {
 		return []Log{}, fmt.Errorf("error: log status must be one of [%s, %s, %s ]", InProgress, Failed, Done)
 	}
@@ -197,14 +201,6 @@ func (s *Logger) Filter(log *Log) ([]Log, error) {
 
 func CreateMustTerms(log *Log) []map[string]interface{} {
 	must := make([]map[string]interface{}, 0)
-	if log.Connector != "" {
-		must = append(must, map[string]interface{}{
-			"term": map[string]interface{}{
-				"connector": map[string]string{
-					"value": log.Connector},
-			},
-		})
-	}
 
 	if log.Status != "" {
 		must = append(must, map[string]interface{}{
