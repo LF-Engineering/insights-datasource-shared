@@ -14,9 +14,9 @@ jobs:
             -var eg_aws_region=${AWS_REGION_ENV} \
             -var aws_secret_key=${AWS_SECRET_ACCESS_KEY_ENV_VAR} \
             -var aws_access_key=${AWS_ACCESS_KEY_ID_ENV_VAR}
-          working_directory: deploy
+          working_directory: deploy/${STAGE}
       - persist_to_workspace:
-          root: .
+          root: ./
           paths:
             - tfapply
   terraform-apply: &terraform-apply
@@ -30,7 +30,7 @@ jobs:
           name: terraform
           command: |
             terraform apply -auto-approve tfapply
-          working_directory: deploy
+          working_directory: deploy/${STAGE}
   deploy: &deploy
     <<: *terraform-plan
     <<: *terraform-apply

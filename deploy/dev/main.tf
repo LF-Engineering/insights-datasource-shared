@@ -15,8 +15,8 @@ resource "aws_ecs_cluster" "insights-git-cluster" {
 }
 
 /* ECS task definitions */
-resource "aws_ecs_task_definition" "insights-connector-git" {
-  family = "insights-connector-git"
+resource "aws_ecs_task_definition" "insights-connector-git-task" {
+  family = "insights-connector-git-task"
   requires_compatibilities = ["FARGATE"]
   network_mode = "awsvpc"
   cpu = "256"
@@ -26,7 +26,7 @@ resource "aws_ecs_task_definition" "insights-connector-git" {
   container_definitions = jsonencode([
     {
       name      = "insights-connector-git"
-      image     = "395594542180.dkr.ecr.us-east-1.amazonaws.com/insights-git-connector:latest"
+      image     = "395594542180.dkr.ecr.us-east-1.amazonaws.com/insights-connector-git:latest"
       cpu       = 128
       memory    = 512
       essential = true
