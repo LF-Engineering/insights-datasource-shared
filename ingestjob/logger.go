@@ -3,6 +3,7 @@ package ingestjob
 import (
 	"encoding/json"
 	"fmt"
+	"strings"
 	"time"
 
 	"github.com/LF-Engineering/insights-datasource-shared/uuid"
@@ -10,7 +11,7 @@ import (
 )
 
 const (
-	logIndex   = "insights-job-logging"
+	logIndex   = "insights-connector"
 	InProgress = "inprogress"
 	Failed     = "failed"
 	Done       = "done"
@@ -59,12 +60,15 @@ func (s *Logger) Write(log *Log) error {
 		return err
 	}
 
+	if log.UpdatedAt.IsZero() {
+		log.UpdatedAt = log.CreatedAt
+	}
 	b, err := jsoniter.Marshal(log)
 	if err != nil {
 		return err
 	}
 
-	index := fmt.Sprintf("%s-%s", logIndex, s.environment)
+	index := fmt.Sprintf("%s-%s-log-%s", logIndex, log.Connector, s.environment)
 	query := map[string]interface{}{
 		"query": map[string]interface{}{
 			"term": map[string]interface{}{
@@ -75,7 +79,7 @@ func (s *Logger) Write(log *Log) error {
 	}
 
 	var res TopHits
-	err = s.esClient.Get(fmt.Sprintf("%s-%s", logIndex, s.environment), query, &res)
+	err = s.esClient.Get(fmt.Sprintf("%s-%s-log-%s", logIndex, log.Connector, s.environment), query, &res)
 	if err != nil || len(res.Hits.Hits) == 0 {
 		_, err := s.esClient.CreateDocument(index, docID, b)
 		return err
@@ -113,7 +117,7 @@ func (s *Logger) Read(connector string, status string) ([]Log, error) {
 
 	var res TopHits
 	logs := make([]Log, 0)
-	err := s.esClient.Get(fmt.Sprintf("%s-%s", logIndex, s.environment), query, &res)
+	err := s.esClient.Get(fmt.Sprintf("%s-%s-log-%s", logIndex, connector, s.environment), query, &res)
 	if err != nil {
 		return logs, err
 	}
@@ -150,8 +154,7 @@ func (s *Logger) Count(connector string, status string) (int, error) {
 			},
 		},
 	}
-
-	return s.esClient.Count(fmt.Sprintf("%s-%s", logIndex, s.environment), query)
+	return s.esClient.Count(fmt.Sprintf("%s-%s-log-%s", logIndex, connector, s.environment), query)
 }
 
 func (s *Logger) updateDocument(log Log, index string, docID string) error {
@@ -167,4 +170,84 @@ func (s *Logger) updateDocument(log Log, index string, docID string) error {
 		return err
 	}
 	return nil
+}
+
+func (s *Logger) Filter(log *Log) ([]Log, error) {
+	if log.Status != InProgress && log.Status != Failed && log.Status != Done {
+		return []Log{}, fmt.Errorf("error: log status must be one of [%s, %s, %s ]", InProgress, Failed, Done)
+	}
+
+	must := CreateMustTerms(log)
+	query := map[string]interface{}{
+		"query": map[string]interface{}{
+			"bool": map[string]interface{}{
+				"must": must,
+			},
+		},
+	}
+
+	var res TopHits
+	logs := make([]Log, 0)
+	err := s.esClient.Get(fmt.Sprintf("%s-%s-log-%s", logIndex, log.Connector, s.environment), query, &res)
+	if err != nil {
+		return logs, err
+	}
+
+	for _, l := range res.Hits.Hits {
+		logs = append(logs, l.Source)
+	}
+
+	return logs, nil
+}
+
+func CreateMustTerms(log *Log) []map[string]interface{} {
+	must := make([]map[string]interface{}, 0)
+	if log.Connector != "" {
+		must = append(must, map[string]interface{}{
+			"term": map[string]interface{}{
+				"connector": map[string]string{
+					"value": log.Connector},
+			},
+		})
+	}
+
+	if log.Status != "" {
+		must = append(must, map[string]interface{}{
+			"term": map[string]interface{}{
+				"status": map[string]string{
+					"value": log.Status},
+			},
+		})
+	}
+
+	if len(log.Configuration) != 0 {
+		for _, conf := range log.Configuration {
+			for k, v := range conf {
+				val := strings.ReplaceAll(v, "/", "\\/")
+				must = append(must, map[string]interface{}{
+					"query_string": map[string]interface{}{
+						"default_field": fmt.Sprintf("configuration.%s", k),
+						"query":         val,
+					},
+				})
+			}
+		}
+	}
+
+	if log.From != nil {
+		from := log.From.Format(time.RFC3339)
+		to := "now/d"
+		if log.To != nil {
+			to = log.To.Format(time.RFC3339)
+		}
+		must = append(must, map[string]interface{}{
+			"range": map[string]interface{}{
+				"created_at": map[string]string{
+					"gte": from,
+					"lte": to},
+			},
+		})
+	}
+
+	return must
 }

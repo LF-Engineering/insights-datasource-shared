@@ -9,8 +9,9 @@ type Log struct {
 	Status        string              `json:"status"`
 	CreatedAt     time.Time           `json:"created_at"`
 	UpdatedAt     time.Time           `json:"updated_at"`
-	ProjectSlug   string              `json:"project_slug"`
 	Message       string              `json:"message"`
+	From          *time.Time          `json:"from,omitempty"`
+	To            *time.Time          `json:"to,omitempty"`
 }
 
 // TopHits result
