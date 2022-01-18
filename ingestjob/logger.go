@@ -50,12 +50,7 @@ func (s *Logger) Write(log *Log) error {
 		return fmt.Errorf("error: log status must be one of [%s, %s, %s ]", InProgress, Failed, Done)
 	}
 
-	date := log.CreatedAt.Format(time.RFC3339)
-	configs, err := json.Marshal(log.Configuration)
-	if err != nil {
-		return err
-	}
-	docID, err := uuid.Generate(log.Connector, string(configs), date)
+	docID, err := generateID(log)
 	if err != nil {
 		return err
 	}
@@ -250,4 +245,17 @@ func CreateMustTerms(log *Log) []map[string]interface{} {
 	}
 
 	return must
+}
+
+func generateID(log *Log) (string, error) {
+	date := log.CreatedAt.Format(time.RFC3339)
+	configs, err := json.Marshal(log.Configuration)
+	if err != nil {
+		return "", err
+	}
+	docID, err := uuid.Generate(log.Connector, string(configs), date)
+	if err != nil {
+		return "", err
+	}
+	return docID, nil
 }
