@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/LF-Engineering/dev-analytics-libraries/uuid"
+	"github.com/LF-Engineering/insights-datasource-shared/uuid"
 	jsoniter "github.com/json-iterator/go"
 )
 
