@@ -477,9 +477,6 @@ func (p *ClientProvider) Search(index string, query map[string]interface{}) ([]b
 		p.client.Search.WithBody(&buf),
 	)
 	if err != nil {
-		if strings.Contains(err.Error(), "server is not Elasticsearch") {
-			fmt.Println("esssssss", p.params)
-		}
 		return nil, err
 	}
 
