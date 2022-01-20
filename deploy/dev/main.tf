@@ -4,6 +4,54 @@ provider "aws" {
   access_key = var.aws_access_key
 }
 
+terraform {
+  backend "s3" {
+    bucket         = "insights-v2-dev"
+    key            = "terraform/terraform.tfstate"
+    region         = "us-east-2" # this cant be replaced with the variable
+    encrypt        = true
+    kms_key_id     = "alias/terraform-bucket-key"
+  }
+}
+
+resource "aws_kms_key" "terraform-bucket-key" {
+  description             = "This key is used to encrypt bucket objects"
+  deletion_window_in_days = 10
+  enable_key_rotation     = true
+}
+
+resource "aws_kms_alias" "key-alias" {
+  name          = "alias/terraform-bucket-key"
+  target_key_id = aws_kms_key.terraform-bucket-key.key_id
+}
+
+resource "aws_s3_bucket" "terraform-state" {
+  bucket = "insights-v2-dev"
+  acl    = "private"
+
+  versioning {
+    enabled = true
+  }
+
+  server_side_encryption_configuration {
+    rule {
+      apply_server_side_encryption_by_default {
+        kms_master_key_id = aws_kms_key.terraform-bucket-key.arn
+        sse_algorithm     = "aws:kms"
+      }
+    }
+  }
+}
+
+resource "aws_s3_bucket_public_access_block" "block" {
+  bucket = aws_s3_bucket.terraform-state.id
+
+  block_public_acls       = true
+  block_public_policy     = true
+  ignore_public_acls      = true
+  restrict_public_buckets = true
+}
+
 /* ECS cluster */
 resource "aws_ecs_cluster" "insights-git-cluster" {
   name = "insights-ecs-cluster"
@@ -15,8 +63,8 @@ resource "aws_ecs_cluster" "insights-git-cluster" {
 }
 
 /* ECS task definitions */
-resource "aws_ecs_task_definition" "insights-git-task" {
-  family = "insights-git-task"
+resource "aws_ecs_task_definition" "insights-connector-git-task" {
+  family = "insights-connector-git-task"
   requires_compatibilities = ["FARGATE"]
   network_mode = "awsvpc"
   cpu = "256"
@@ -25,8 +73,8 @@ resource "aws_ecs_task_definition" "insights-git-task" {
   task_role_arn = aws_iam_role.ecs_task_role.arn
   container_definitions = jsonencode([
     {
-      name      = "insights-git"
-      image     = "linonymous/insights-git-binary:latest"
+      name      = "insights-connector-git"
+      image     = "395594542180.dkr.ecr.${var.eg_aws_region}.amazonaws.com/insights-connector-git:latest"
       cpu       = 128
       memory    = 512
       essential = true
@@ -34,7 +82,7 @@ resource "aws_ecs_task_definition" "insights-git-task" {
         "logDriver": "awslogs",
         "options": {
           "awslogs-group": "insights-ecs-git",
-          "awslogs-region": "us-east-2",
+          "awslogs-region": var.eg_aws_region,
           "awslogs-create-group": "true",
           "awslogs-stream-prefix": "ecs"
         }
@@ -56,7 +104,7 @@ resource "aws_ecs_task_definition" "insights-connector-jira-task" {
   container_definitions = jsonencode([
     {
       name      = "insights-connector-jira"
-      image     = "395594542180.dkr.ecr.us-east-1.amazonaws.com/insights-connector-jira:latest"
+      image     = "395594542180.dkr.ecr.${var.eg_aws_region}.amazonaws.com/insights-connector-jira:latest"
       cpu       = 128
       memory    = 512
       essential = true
@@ -64,7 +112,7 @@ resource "aws_ecs_task_definition" "insights-connector-jira-task" {
         "logDriver": "awslogs",
         "options": {
           "awslogs-group": "insights-connector-jira-logs",
-          "awslogs-region": "us-east-2",
+          "awslogs-region": var.eg_aws_region,
           "awslogs-create-group": "true",
           "awslogs-stream-prefix": "ecs"
         }
@@ -94,7 +142,7 @@ resource "aws_ecs_task_definition" "insights-connector-gerrit-task" {
         "logDriver": "awslogs",
         "options": {
           "awslogs-group": "insights-connector-gerrit-task",
-          "awslogs-region": "us-east-2",
+          "awslogs-region": var.eg_aws_region,
           "awslogs-create-group": "true",
           "awslogs-stream-prefix": "ecs"
         }
@@ -162,7 +210,7 @@ resource "aws_subnet" "main" {
 resource "aws_ecs_service" "git" {
   name            = "insights-git"
   cluster         = aws_ecs_cluster.insights-git-cluster.id
-  task_definition = aws_ecs_task_definition.insights-git-task.arn
+  task_definition = aws_ecs_task_definition.insights-connector-git-task.arn
   desired_count   = 1
   launch_type                        = "FARGATE"
   scheduling_strategy                = "REPLICA"
@@ -178,7 +226,7 @@ resource "aws_ecs_service" "git" {
 /* iam roles */
 
 resource "aws_iam_role" "ecs_task_execution_role" {
-  name = "role-name"
+  name = "ecs-ta-role"
 
   assume_role_policy = <<EOF
 {
@@ -201,7 +249,7 @@ EOF
 }
 
 resource "aws_iam_role" "ecs_task_role" {
-  name = "role-name-task"
+  name = "ecs-tas-role"
 
   assume_role_policy = <<EOF
 {

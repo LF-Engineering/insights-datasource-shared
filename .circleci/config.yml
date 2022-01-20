@@ -1,0 +1,129 @@
+version: 2.1
+
+jobs:
+  terraform-validate: &terraform-validate
+    docker:
+      - image: docker.mirror.hashicorp.services/hashicorp/terraform:light
+    steps:
+      - checkout
+      - run:
+          name: Setup AWS key
+          command: |
+            eval "echo 'export AWS_ACCESS_KEY_ID=\$$AWS_ACCESS_KEY_ID_ENV_VAR'" >> $BASH_ENV
+            eval "echo 'export AWS_SECRET_ACCESS_KEY=\$$AWS_SECRET_ACCESS_KEY_ENV_VAR'" >> $BASH_ENV
+            eval "echo 'export AWS_DEFAULT_REGION=\$$AWS_REGION_ENV_VAR'" >> $BASH_ENV
+      - run:
+          name: terraform validate
+          command: |
+            cd deploy/${STAGE} && terraform init -backend-config="access_key=${AWS_ACCESS_KEY_ID_ENV_VAR}" -backend-config="secret_key=${AWS_SECRET_ACCESS_KEY_ENV_VAR}" && \
+            terraform validate
+
+  terraform-deploy: &terraform-deploy
+    docker:
+      - image: docker.mirror.hashicorp.services/hashicorp/terraform:light
+    steps:
+      - checkout
+      - run:
+          name: Setup AWS key
+          command: |
+            eval "echo 'export AWS_ACCESS_KEY_ID=\$$AWS_ACCESS_KEY_ID_ENV_VAR'" >> $BASH_ENV
+            eval "echo 'export AWS_SECRET_ACCESS_KEY=\$$AWS_SECRET_ACCESS_KEY_ENV_VAR'" >> $BASH_ENV
+            eval "echo 'export AWS_DEFAULT_REGION=\$$AWS_REGION_ENV_VAR'" >> $BASH_ENV
+      - run:
+          name: terraform init & plan
+          command: |
+            cd deploy/${STAGE} && terraform init -backend-config="access_key=${AWS_ACCESS_KEY_ID_ENV_VAR}" -backend-config="secret_key=${AWS_SECRET_ACCESS_KEY_ENV_VAR}" && terraform plan -out tfapply \
+            -var eg_aws_region=${AWS_REGION_ENV_VAR} \
+            -var aws_secret_key=${AWS_SECRET_ACCESS_KEY_ENV_VAR} \
+            -var aws_access_key=${AWS_ACCESS_KEY_ID_ENV_VAR} && ls && pwd \
+      - run:
+          name: terraform deploy
+          command: |
+            cd deploy/${STAGE} && terraform apply -auto-approve tfapply
+  validate_dev:
+    <<: *terraform-validate
+    environment:
+      AWS_ACCESS_KEY_ID_ENV_VAR: AWS_ACCESS_KEY_ID_DEV
+      AWS_SECRET_ACCESS_KEY_ENV_VAR: AWS_SECRET_ACCESS_KEY_DEV
+      AWS_REGION_ENV_VAR: AWS_REGION_DEV
+      STAGE: dev
+  validate_prod:
+    <<: *terraform-validate
+    environment:
+      AWS_ACCESS_KEY_ID_ENV_VAR: AWS_ACCESS_KEY_ID_PROD
+      AWS_SECRET_ACCESS_KEY_ENV_VAR: AWS_SECRET_ACCESS_KEY_PROD
+      AWS_REGION_ENV_VAR: AWS_REGION_PROD
+      STAGE: prod
+  validate_test:
+    <<: *terraform-validate
+    environment:
+      AWS_ACCESS_KEY_ID_ENV_VAR: AWS_ACCESS_KEY_ID_TEST
+      AWS_SECRET_ACCESS_KEY_ENV_VAR: AWS_SECRET_ACCESS_KEY_TEST
+      AWS_REGION_ENV_VAR: AWS_REGION_TEST
+      STAGE: test
+  deploy_dev:
+    <<: *terraform-deploy
+    environment:
+      AWS_ACCESS_KEY_ID_ENV_VAR: AWS_ACCESS_KEY_ID_DEV
+      AWS_SECRET_ACCESS_KEY_ENV_VAR: AWS_SECRET_ACCESS_KEY_DEV
+      AWS_REGION_ENV_VAR: AWS_REGION_DEV
+      STAGE: dev
+  deploy_test:
+    <<: *terraform-deploy
+    environment:
+      AWS_ACCESS_KEY_ID_ENV_VAR: AWS_ACCESS_KEY_ID_TEST
+      AWS_SECRET_ACCESS_KEY_ENV_VAR: AWS_SECRET_ACCESS_KEY_TEST
+      AWS_REGION_ENV_VAR: AWS_REGION_TEST
+      STAGE: test
+  deploy_prod:
+    <<: *terraform-deploy
+    environment:
+      AWS_ACCESS_KEY_ID_ENV_VAR: AWS_ACCESS_KEY_ID_PROD
+      AWS_SECRET_ACCESS_KEY_ENV_VAR: AWS_SECRET_ACCESS_KEY_PROD
+      AWS_REGION_ENV_VAR: AWS_REGION_PROD
+      STAGE: prod
+workflows:
+  plan_approve_apply:
+    jobs:
+      - validate_dev
+      - deploy_dev:
+          filters:
+            branches:
+              only: main
+          requires:
+            - validate_dev
+      - validate_test:
+          filters:
+            branches:
+              ignore: /.*/
+            tags:
+              only: /^v\d+(\.\d+)?(\.\d+)?$/
+      - deploy_test:
+          filters:
+            branches:
+              ignore: /.*/
+            tags:
+              only: /^v\d+(\.\d+)?(\.\d+)?$/
+          requires:
+            - validate_test
+      - validate_prod:
+          filters:
+            branches:
+              ignore: /.*/
+            tags:
+              only: /^v\d+(\.\d+)?(\.\d+)?$/
+      - approve-prod:
+          type: approval
+          filters:
+            branches:
+              ignore: /.*/
+            tags:
+              only: /^v\d+(\.\d+)?(\.\d+)?$/
+          requires:
+            - validate_prod
+      - deploy_prod:
+          filters:
+            branches:
+              ignore: /.*/
+            tags:
+              only: /^v\d+(\.\d+)?(\.\d+)?$/
