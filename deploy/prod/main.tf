@@ -164,7 +164,7 @@ resource "aws_ecs_task_definition" "insights-connector-bugzilla-task" {
   container_definitions = jsonencode([
     {
       name      = "insights-connector-bugzilla"
-      image     = "844390194980.dkr.ecr.us-east-l.amazonaws.com/insights-connector-bugzilla:latest"
+      image     = "844390194980.dkr.ecr.us-east-l.amazonaws.com/insights-connector-bugzilla:stable"
       cpu       = 128
       memory    = 512
       essential = true
