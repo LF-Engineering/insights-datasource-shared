@@ -1,89 +1,142 @@
 version: 2.1
+references:
+
+base_image: &base_image
+  hashicorp/terraform:1.1.4
+
+working_directory: &working_directory
+  /go/src/github.com/LF-Engineering/terraform-script
+
+default_config: &default_config
+  docker:
+    - image: *base_image
+  working_directory: *working_directory
+  environment:
+    BASH_ENV: /root/.bashrc
+
+set_terraform_environment_dev: &set_terraform_environment_dev
+  run:
+    name: set terraform environment dev
+    command: |
+      cd && touch $BASH_ENV
+      echo 'export AWS_ACCESS_KEY_ID=$AWS_ACCESS_KEY_ID_DEV' >> $BASH_ENV
+      echo 'export AWS_SECRET_ACCESS_KEY=$AWS_SECRET_ACCESS_KEY_DEV ' >> $BASH_ENV
+      echo 'export AWS_DEFAULT_REGION=$AWS_REGION_DEV' >> $BASH_ENV
+      echo 'export STAGE=dev' >> $BASH_ENV
+
+set_terraform_environment_test: &set_terraform_environment_test
+  run:
+    name: set terraform environment test
+    command: |
+      cd && touch $BASH_ENV
+      echo 'export AWS_ACCESS_KEY_ID=$AWS_ACCESS_KEY_ID_TEST' >> $BASH_ENV
+      echo 'export AWS_SECRET_ACCESS_KEY=$AWS_SECRET_ACCESS_KEY_TEST' >> $BASH_ENV
+      echo 'export AWS_DEFAULT_REGION=$AWS_REGION_TEST' >> $BASH_ENV
+      echo 'export STAGE=test' >> $BASH_ENV
+
+set_terraform_environment_prod: &set_terraform_environment_prod
+  run:
+    name: set terraform environment prod
+    command: |
+      cd && touch $BASH_ENV
+      echo 'export AWS_ACCESS_KEY_ID=$AWS_ACCESS_KEY_ID_PROD' >> $BASH_ENV
+      echo 'export AWS_SECRET_ACCESS_KEY=$AWS_SECRET_ACCESS_KEY_PROD' >> $BASH_ENV
+      echo 'export AWS_DEFAULT_REGION=$AWS_REGION_PROD' >> $BASH_ENV
+      echo 'export STAGE=prod' >> $BASH_ENV
+
+terraform_init: &terraform_init
+  run:
+    name: terraform init
+    command: |
+      source $BASH_ENV
+      pwd
+      ls
+      cd deploy/${STAGE} && terraform init -backend-config="access_key=${AWS_ACCESS_KEY_ID}" -backend-config="secret_key=${AWS_SECRET_ACCESS_KEY}"
+
+terraform_validate: &terraform_validate
+  run:
+    name: terraform validate
+    command: |
+      source $BASH_ENV
+      cd deploy/${STAGE} && terraform validate
+
+terraform_plan: &terraform_plan
+  run:
+    name: terraform plan
+    command: |
+      source $BASH_ENV
+      cd deploy/${STAGE} && TF_VAR_aws_access_key=$AWS_ACCESS_KEY_ID TF_VAR_aws_secret_key=$AWS_SECRET_ACCESS_KEY TF_VAR_eg_aws_region=$AWS_DEFAULT_REGION terraform plan -out tfapply
+
+terraform_apply: &terraform_apply
+  run:
+    name: terraform apply
+    command: |
+      source $BASH_ENV
+      cd deploy/${STAGE} && TF_VAR_aws_access_key=$AWS_ACCESS_KEY_ID TF_VAR_aws_secret_key=$AWS_SECRET_ACCESS_KEY TF_VAR_eg_aws_region=$AWS_DEFAULT_REGION terraform apply --auto-approve tfapply
 
 jobs:
-  terraform-validate: &terraform-validate
-    docker:
-      - image: docker.mirror.hashicorp.services/hashicorp/terraform:light
-    steps:
-      - checkout
-      - run:
-          name: Setup AWS key
-          command: |
-            eval "echo 'export AWS_ACCESS_KEY_ID=\$$AWS_ACCESS_KEY_ID_ENV_VAR'" >> $BASH_ENV
-            eval "echo 'export AWS_SECRET_ACCESS_KEY=\$$AWS_SECRET_ACCESS_KEY_ENV_VAR'" >> $BASH_ENV
-            eval "echo 'export AWS_DEFAULT_REGION=\$$AWS_REGION_ENV_VAR'" >> $BASH_ENV
-      - run:
-          name: terraform validate
-          command: |
-            cd deploy/${STAGE} && terraform init -backend-config="access_key=${AWS_ACCESS_KEY_ID_ENV_VAR}" -backend-config="secret_key=${AWS_SECRET_ACCESS_KEY_ENV_VAR}" && \
-            terraform validate
-
-  terraform-deploy: &terraform-deploy
-    docker:
-      - image: docker.mirror.hashicorp.services/hashicorp/terraform:light
-    steps:
-      - checkout
-      - run:
-          name: Setup AWS key
-          command: |
-            eval "echo 'export AWS_ACCESS_KEY_ID=\$$AWS_ACCESS_KEY_ID_ENV_VAR'" >> $BASH_ENV
-            eval "echo 'export AWS_SECRET_ACCESS_KEY=\$$AWS_SECRET_ACCESS_KEY_ENV_VAR'" >> $BASH_ENV
-            eval "echo 'export AWS_DEFAULT_REGION=\$$AWS_REGION_ENV_VAR'" >> $BASH_ENV
-      - run:
-          name: terraform init & plan
-          command: |
-            cd deploy/${STAGE} && terraform init -backend-config="access_key=${AWS_ACCESS_KEY_ID_ENV_VAR}" -backend-config="secret_key=${AWS_SECRET_ACCESS_KEY_ENV_VAR}" && terraform plan -out tfapply \
-            -var eg_aws_region=${AWS_REGION_ENV_VAR} \
-            -var aws_secret_key=${AWS_SECRET_ACCESS_KEY_ENV_VAR} \
-            -var aws_access_key=${AWS_ACCESS_KEY_ID_ENV_VAR} && ls && pwd \
-      - run:
-          name: terraform deploy
-          command: |
-            cd deploy/${STAGE} && terraform apply -auto-approve tfapply
-  validate_dev:
-    <<: *terraform-validate
-    environment:
-      AWS_ACCESS_KEY_ID_ENV_VAR: AWS_ACCESS_KEY_ID_DEV
-      AWS_SECRET_ACCESS_KEY_ENV_VAR: AWS_SECRET_ACCESS_KEY_DEV
-      AWS_REGION_ENV_VAR: AWS_REGION_DEV
-      STAGE: dev
-  validate_prod:
-    <<: *terraform-validate
-    environment:
-      AWS_ACCESS_KEY_ID_ENV_VAR: AWS_ACCESS_KEY_ID_PROD
-      AWS_SECRET_ACCESS_KEY_ENV_VAR: AWS_SECRET_ACCESS_KEY_PROD
-      AWS_REGION_ENV_VAR: AWS_REGION_PROD
-      STAGE: prod
-  validate_test:
-    <<: *terraform-validate
-    environment:
-      AWS_ACCESS_KEY_ID_ENV_VAR: AWS_ACCESS_KEY_ID_TEST
-      AWS_SECRET_ACCESS_KEY_ENV_VAR: AWS_SECRET_ACCESS_KEY_TEST
-      AWS_REGION_ENV_VAR: AWS_REGION_TEST
-      STAGE: test
-  deploy_dev:
-    <<: *terraform-deploy
-    environment:
-      AWS_ACCESS_KEY_ID_ENV_VAR: AWS_ACCESS_KEY_ID_DEV
-      AWS_SECRET_ACCESS_KEY_ENV_VAR: AWS_SECRET_ACCESS_KEY_DEV
-      AWS_REGION_ENV_VAR: AWS_REGION_DEV
-      STAGE: dev
-  deploy_test:
-    <<: *terraform-deploy
-    environment:
-      AWS_ACCESS_KEY_ID_ENV_VAR: AWS_ACCESS_KEY_ID_TEST
-      AWS_SECRET_ACCESS_KEY_ENV_VAR: AWS_SECRET_ACCESS_KEY_TEST
-      AWS_REGION_ENV_VAR: AWS_REGION_TEST
-      STAGE: test
   deploy_prod:
-    <<: *terraform-deploy
-    environment:
-      AWS_ACCESS_KEY_ID_ENV_VAR: AWS_ACCESS_KEY_ID_PROD
-      AWS_SECRET_ACCESS_KEY_ENV_VAR: AWS_SECRET_ACCESS_KEY_PROD
-      AWS_REGION_ENV_VAR: AWS_REGION_PROD
-      STAGE: prod
+    <<: *default_config
+    steps:
+      - checkout
+      - *set_terraform_environment_prod
+      - *terraform_init
+      - attach_workspace:
+          at: *working_directory
+      - *terraform_plan
+      - *terraform_apply
+
+  deploy_test:
+    <<: *default_config
+    steps:
+      - checkout
+      - *set_terraform_environment_test
+      - *terraform_init
+      - attach_workspace:
+          at: *working_directory
+      - *terraform_plan
+      - *terraform_apply
+
+  deploy_dev:
+    <<: *default_config
+    steps:
+      - checkout
+      - *set_terraform_environment_dev
+      - *terraform_init
+      - attach_workspace:
+          at: *working_directory
+      - *terraform_plan
+      - *terraform_apply
+
+  validate_dev:
+    <<: *default_config
+    steps:
+      - checkout
+      - setup_remote_docker
+      - *set_terraform_environment_dev
+      - *terraform_init
+      - *terraform_validate
+
+  validate_prod:
+    <<: *default_config
+    steps:
+      - checkout
+      - setup_remote_docker
+      - *set_terraform_environment_prod
+      - *terraform_init
+      - *terraform_validate
+
+  validate_test:
+    <<: *default_config
+    steps:
+      - checkout
+      - setup_remote_docker
+      - *set_terraform_environment_test
+      - *terraform_init
+      - *terraform_validate
+
 workflows:
-  plan_approve_apply:
+  build-ecs:
     jobs:
       - validate_dev
       - deploy_dev:
