@@ -152,6 +152,35 @@ resource "aws_ecs_task_definition" "insights-connector-gerrit-task" {
 
 }
 
+/* ECS bugzilla connector task definition */
+resource "aws_ecs_task_definition" "insights-connector-bugzilla-task" {
+  family = "insights-connector-bugzilla-task"
+  requires_compatibilities = ["FARGATE"]
+  network_mode = "awsvpc"
+  cpu = "256"
+  memory = "512"
+  execution_role_arn = aws_iam_role.ecs_task_execution_role.arn
+  task_role_arn = aws_iam_role.ecs_task_role.arn
+  container_definitions = jsonencode([
+    {
+      name      = "insights-connector-bugzilla"
+      image     = "726224182707.dkr.ecr.us-east-l.amazonaws.com/insights-connector-bugzilla:latest"
+      cpu       = 128
+      memory    = 512
+      essential = true
+      logConfiguration: {
+        "logDriver": "awslogs",
+        "options": {
+          "awslogs-group": "insights-connector-bugzilla-task",
+          "awslogs-region": var.eg_aws_region,
+          "awslogs-create-group": "true",
+          "awslogs-stream-prefix": "ecs"
+        }
+      }
+    }
+  ])
+
+}
 
 resource "aws_security_group" "security_group" {
   name        = "example-task-security-group"
