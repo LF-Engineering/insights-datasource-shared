@@ -53,7 +53,7 @@ resource "aws_s3_bucket_public_access_block" "block" {
 }
 
 /* ECS cluster */
-resource "aws_ecs_cluster" "insights-git-cluster" {
+resource "aws_ecs_cluster" "insights-ecs-cluster" {
   name = "insights-ecs-cluster"
 
   setting {
@@ -163,7 +163,7 @@ resource "aws_ecs_task_definition" "insights-connector-github-task" {
   task_role_arn = aws_iam_role.ecs_task_role.arn
   container_definitions = jsonencode([
     {
-      name      = "insights-connector-git"
+      name      = "insights-connector-github"
       image     = "395594542180.dkr.ecr.${var.eg_aws_region}.amazonaws.com/insights-connector-github:test"
       cpu       = 128
       memory    = 512
@@ -238,7 +238,7 @@ resource "aws_subnet" "main" {
 /* ecs service */
 resource "aws_ecs_service" "git" {
   name            = "insights-git"
-  cluster         = aws_ecs_cluster.insights-git-cluster.id
+  cluster         = aws_ecs_cluster.insights-ecs-cluster.id
   task_definition = aws_ecs_task_definition.insights-connector-git-task.arn
   desired_count   = 1
   launch_type                        = "FARGATE"
@@ -253,7 +253,7 @@ resource "aws_ecs_service" "git" {
 
 resource "aws_ecs_service" "github" {
   name            = "insights-github"
-  cluster         = aws_ecs_cluster.insights-git-cluster.id
+  cluster         = aws_ecs_cluster.insights-ecs-cluster.id
   task_definition = aws_ecs_task_definition.insights-connector-github-task.arn
   desired_count   = 1
   launch_type                        = "FARGATE"
@@ -267,7 +267,7 @@ resource "aws_ecs_service" "github" {
 
 resource "aws_ecs_service" "jira" {
   name            = "insights-jira"
-  cluster         = aws_ecs_cluster.insights-git-cluster.id
+  cluster         = aws_ecs_cluster.insights-ecs-cluster.id
   task_definition = aws_ecs_task_definition.insights-connector-jira-task.arn
   desired_count   = 1
   launch_type                        = "FARGATE"
@@ -281,7 +281,7 @@ resource "aws_ecs_service" "jira" {
 
 resource "aws_ecs_service" "gerrit" {
   name            = "insights-gerrit"
-  cluster         = aws_ecs_cluster.insights-git-cluster.id
+  cluster         = aws_ecs_cluster.insights-ecs-cluster.id
   task_definition = aws_ecs_task_definition.insights-connector-gerrit-task.arn
   desired_count   = 1
   launch_type                        = "FARGATE"
