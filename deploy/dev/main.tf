@@ -183,6 +183,36 @@ resource "aws_ecs_task_definition" "insights-connector-gerrit-task" {
 
 }
 
+/* ECS task definitions */
+resource "aws_ecs_task_definition" "insights-connector-github-task" {
+  family = "insights-connector-github-task"
+  requires_compatibilities = ["FARGATE"]
+  network_mode = "awsvpc"
+  cpu = "256"
+  memory = "512"
+  execution_role_arn = aws_iam_role.ecs_task_execution_role.arn
+  task_role_arn = aws_iam_role.ecs_task_role.arn
+  container_definitions = jsonencode([
+    {
+      name      = "insights-connector-git"
+      image     = "395594542180.dkr.ecr.${var.eg_aws_region}.amazonaws.com/insights-connector-github:latest"
+      cpu       = 128
+      memory    = 512
+      essential = true
+      logConfiguration: {
+        "logDriver": "awslogs",
+        "options": {
+          "awslogs-group": "insights-connector-github-task",
+          "awslogs-region": var.eg_aws_region,
+          "awslogs-create-group": "true",
+          "awslogs-stream-prefix": "ecs"
+        }
+      }
+    }
+  ])
+
+}
+
 resource "aws_security_group" "security_group" {
   name        = "example-task-security-group"
   vpc_id      = aws_vpc.main.id
@@ -252,6 +282,47 @@ resource "aws_ecs_service" "git" {
 
 }
 
+resource "aws_ecs_service" "github" {
+  name            = "insights-github"
+  cluster         = aws_ecs_cluster.insights-git-cluster.id
+  task_definition = aws_ecs_task_definition.insights-connector-github-task.arn
+  desired_count   = 1
+  launch_type                        = "FARGATE"
+  scheduling_strategy                = "REPLICA"
+  network_configuration {
+    security_groups = [aws_security_group.security_group.id]
+    subnets = [aws_subnet.main.id]
+    assign_public_ip = true
+  }
+}
+
+resource "aws_ecs_service" "jira" {
+  name            = "insights-jira"
+  cluster         = aws_ecs_cluster.insights-git-cluster.id
+  task_definition = aws_ecs_task_definition.insights-connector-jira-task.arn
+  desired_count   = 1
+  launch_type                        = "FARGATE"
+  scheduling_strategy                = "REPLICA"
+  network_configuration {
+    security_groups = [aws_security_group.security_group.id]
+    subnets = [aws_subnet.main.id]
+    assign_public_ip = true
+  }
+}
+
+resource "aws_ecs_service" "gerrit" {
+  name            = "insights-gerrit"
+  cluster         = aws_ecs_cluster.insights-git-cluster.id
+  task_definition = aws_ecs_task_definition.insights-connector-gerrit-task.arn
+  desired_count   = 1
+  launch_type                        = "FARGATE"
+  scheduling_strategy                = "REPLICA"
+  network_configuration {
+    security_groups = [aws_security_group.security_group.id]
+    subnets = [aws_subnet.main.id]
+    assign_public_ip = true
+  }
+}
 
 /* iam roles */
 
