@@ -152,6 +152,36 @@ resource "aws_ecs_task_definition" "insights-connector-gerrit-task" {
 
 }
 
+/* ECS bugzilla connector task definition */
+resource "aws_ecs_task_definition" "insights-connector-bugzilla-task" {
+  family = "insights-connector-bugzilla-task"
+  requires_compatibilities = ["FARGATE"]
+  network_mode = "awsvpc"
+  cpu = "256"
+  memory = "512"
+  execution_role_arn = aws_iam_role.ecs_task_execution_role.arn
+  task_role_arn = aws_iam_role.ecs_task_role.arn
+  container_definitions = jsonencode([
+    {
+      name      = "insights-connector-bugzilla"
+      image     = "844390194980.dkr.ecr.us-east-l.amazonaws.com/insights-connector-bugzilla:stable"
+      cpu       = 128
+      memory    = 512
+      essential = true
+      logConfiguration: {
+        "logDriver": "awslogs",
+        "options": {
+          "awslogs-group": "insights-connector-bugzilla-task",
+          "awslogs-region": var.eg_aws_region,
+          "awslogs-create-group": "true",
+          "awslogs-stream-prefix": "ecs"
+        }
+      }
+    }
+  ])
+
+}
+
 /* ECS github task definitions */
 resource "aws_ecs_task_definition" "insights-connector-github-task" {
   family = "insights-connector-github-task"
@@ -251,6 +281,22 @@ resource "aws_ecs_service" "git" {
 
 }
 
+/* ecs bugzilla service */
+resource "aws_ecs_service" "bugzilla" {
+  name            = "insights-bugzilla"
+  cluster         = aws_ecs_cluster.insights-git-cluster.id
+  task_definition = aws_ecs_task_definition.insights-connector-bugzilla-task.arn
+  desired_count   = 1
+  launch_type                        = "FARGATE"
+  scheduling_strategy                = "REPLICA"
+  network_configuration {
+    security_groups = [aws_security_group.security_group.id]
+    subnets = [aws_subnet.main.id]
+    assign_public_ip = true
+  }
+
+}
+
 resource "aws_ecs_service" "github" {
   name            = "insights-github"
   cluster         = aws_ecs_cluster.insights-ecs-cluster.id
@@ -264,6 +310,7 @@ resource "aws_ecs_service" "github" {
     assign_public_ip = true
   }
 }
+
 
 resource "aws_ecs_service" "jira" {
   name            = "insights-jira"
@@ -292,6 +339,7 @@ resource "aws_ecs_service" "gerrit" {
     assign_public_ip = true
   }
 }
+
 /* iam roles */
 
 resource "aws_iam_role" "ecs_task_execution_role" {
