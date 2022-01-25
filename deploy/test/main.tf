@@ -284,7 +284,7 @@ resource "aws_ecs_service" "git" {
 /* ecs bugzilla service */
 resource "aws_ecs_service" "bugzilla" {
   name            = "insights-bugzilla"
-  cluster         = aws_ecs_cluster.insights-git-cluster.id
+  cluster         = aws_ecs_cluster.insights-ecs-cluster.id
   task_definition = aws_ecs_task_definition.insights-connector-bugzilla-task.arn
   desired_count   = 1
   launch_type                        = "FARGATE"
