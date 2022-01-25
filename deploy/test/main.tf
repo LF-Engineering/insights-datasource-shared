@@ -134,7 +134,7 @@ resource "aws_ecs_task_definition" "insights-connector-gerrit-task" {
   container_definitions = jsonencode([
     {
       name      = "insights-connector-gerrit"
-      image     = "395594542180.dkr.ecr.us-east-l.amazonaws.com/insights-connector-gerrit:test"
+      image     = "395594542180.dkr.ecr.${var.eg_aws_region}.amazonaws.com/insights-connector-gerrit:test"
       cpu       = 128
       memory    = 512
       essential = true
@@ -164,7 +164,7 @@ resource "aws_ecs_task_definition" "insights-connector-bugzilla-task" {
   container_definitions = jsonencode([
     {
       name      = "insights-connector-bugzilla"
-      image     = "726224182707.dkr.ecr.us-east-l.amazonaws.com/insights-connector-bugzilla:test"
+      image     = "726224182707.dkr.ecr.${var.eg_aws_region}.amazonaws.com/insights-connector-bugzilla:test"
       cpu       = 128
       memory    = 512
       essential = true
@@ -270,7 +270,6 @@ resource "aws_ecs_service" "git" {
   name            = "insights-git"
   cluster         = aws_ecs_cluster.insights-ecs-cluster.id
   task_definition = aws_ecs_task_definition.insights-connector-git-task.arn
-  desired_count   = 1
   launch_type                        = "FARGATE"
   scheduling_strategy                = "REPLICA"
   network_configuration {
@@ -286,7 +285,6 @@ resource "aws_ecs_service" "bugzilla" {
   name            = "insights-bugzilla"
   cluster         = aws_ecs_cluster.insights-ecs-cluster.id
   task_definition = aws_ecs_task_definition.insights-connector-bugzilla-task.arn
-  desired_count   = 1
   launch_type                        = "FARGATE"
   scheduling_strategy                = "REPLICA"
   network_configuration {
@@ -301,7 +299,6 @@ resource "aws_ecs_service" "github" {
   name            = "insights-github"
   cluster         = aws_ecs_cluster.insights-ecs-cluster.id
   task_definition = aws_ecs_task_definition.insights-connector-github-task.arn
-  desired_count   = 1
   launch_type                        = "FARGATE"
   scheduling_strategy                = "REPLICA"
   network_configuration {
@@ -316,7 +313,6 @@ resource "aws_ecs_service" "jira" {
   name            = "insights-jira"
   cluster         = aws_ecs_cluster.insights-ecs-cluster.id
   task_definition = aws_ecs_task_definition.insights-connector-jira-task.arn
-  desired_count   = 1
   launch_type                        = "FARGATE"
   scheduling_strategy                = "REPLICA"
   network_configuration {
@@ -330,7 +326,6 @@ resource "aws_ecs_service" "gerrit" {
   name            = "insights-gerrit"
   cluster         = aws_ecs_cluster.insights-ecs-cluster.id
   task_definition = aws_ecs_task_definition.insights-connector-gerrit-task.arn
-  desired_count   = 1
   launch_type                        = "FARGATE"
   scheduling_strategy                = "REPLICA"
   network_configuration {
