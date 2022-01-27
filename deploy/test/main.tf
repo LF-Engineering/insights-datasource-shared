@@ -242,6 +242,36 @@ resource "aws_ecs_task_definition" "insights-connector-bugzillarest-task" {
 
 }
 
+/* ECS dockerhub connector task definition */
+resource "aws_ecs_task_definition" "insights-connector-dockerhub-task" {
+  family = "insights-connector-dockerhub-task"
+  requires_compatibilities = ["FARGATE"]
+  network_mode = "awsvpc"
+  cpu = "256"
+  memory = "512"
+  execution_role_arn = aws_iam_role.ecs_task_execution_role.arn
+  task_role_arn = aws_iam_role.ecs_task_role.arn
+  container_definitions = jsonencode([
+    {
+      name      = "insights-connector-dockerhub"
+      image     = "726224182707.dkr.ecr.${var.eg_aws_region}.amazonaws.com/insights-connector-dockerhub:test"
+      cpu       = 128
+      memory    = 512
+      essential = true
+      logConfiguration: {
+        "logDriver": "awslogs",
+        "options": {
+          "awslogs-group": "insights-connector-dockerhub-task",
+          "awslogs-region": var.eg_aws_region,
+          "awslogs-create-group": "true",
+          "awslogs-stream-prefix": "ecs"
+        }
+      }
+    }
+  ])
+
+}
+
 resource "aws_security_group" "security_group" {
   name        = "example-task-security-group"
   vpc_id      = aws_vpc.main.id
@@ -370,6 +400,21 @@ resource "aws_ecs_service" "bugzillarest" {
   name            = "insights-bugzillarest"
   cluster         = aws_ecs_cluster.insights-ecs-cluster.id
   task_definition = aws_ecs_task_definition.insights-connector-bugzillarest-task.arn
+  launch_type                        = "FARGATE"
+  scheduling_strategy                = "REPLICA"
+  network_configuration {
+    security_groups = [aws_security_group.security_group.id]
+    subnets = [aws_subnet.main.id]
+    assign_public_ip = true
+  }
+
+}
+
+/* ecs dockerhub service */
+resource "aws_ecs_service" "dockerhub" {
+  name            = "insights-dockerhub"
+  cluster         = aws_ecs_cluster.insights-ecs-cluster.id
+  task_definition = aws_ecs_task_definition.insights-connector-dockerhub-task.arn
   launch_type                        = "FARGATE"
   scheduling_strategy                = "REPLICA"
   network_configuration {
