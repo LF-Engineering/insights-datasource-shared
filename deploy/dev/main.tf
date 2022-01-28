@@ -74,7 +74,7 @@ resource "aws_ecs_task_definition" "insights-connector-git-task" {
   container_definitions = jsonencode([
     {
       name      = "insights-connector-git"
-      image     = "395594542180.dkr.ecr.${var.eg_aws_region}.amazonaws.com/insights-connector-git:latest"
+      image     = "${var.eg_account_id}.dkr.ecr.${var.eg_aws_region}.amazonaws.com/insights-connector-git:latest"
       cpu       = 128
       memory    = 512
       essential = true
@@ -104,7 +104,7 @@ resource "aws_ecs_task_definition" "insights-connector-jira-task" {
   container_definitions = jsonencode([
     {
       name      = "insights-connector-jira"
-      image     = "395594542180.dkr.ecr.${var.eg_aws_region}.amazonaws.com/insights-connector-jira:latest"
+      image     = "${var.eg_account_id}.dkr.ecr.${var.eg_aws_region}.amazonaws.com/insights-connector-jira:latest"
       cpu       = 128
       memory    = 512
       essential = true
@@ -134,7 +134,7 @@ resource "aws_ecs_task_definition" "insights-connector-confluence-task" {
   container_definitions = jsonencode([
     {
       name      = "insights-connector-confluence"
-      image     = "395594542180.dkr.ecr.${var.eg_aws_region}.amazonaws.com/insights-connector-confluence:latest"
+      image     = "${var.eg_account_id}.dkr.ecr.${var.eg_aws_region}.amazonaws.com/insights-connector-confluence:latest"
       cpu       = 128
       memory    = 512
       essential = true
@@ -165,7 +165,7 @@ resource "aws_ecs_task_definition" "insights-connector-gerrit-task" {
   container_definitions = jsonencode([
     {
       name      = "insights-connector-gerrit"
-      image     = "395594542180.dkr.ecr.${var.eg_aws_region}.amazonaws.com/insights-connector-gerrit:latest"
+      image     = "${var.eg_account_id}.dkr.ecr.${var.eg_aws_region}.amazonaws.com/insights-connector-gerrit:latest"
       cpu       = 128
       memory    = 512
       essential = true
@@ -196,7 +196,7 @@ resource "aws_ecs_task_definition" "insights-connector-bugzilla-task" {
   container_definitions = jsonencode([
     {
       name      = "insights-connector-bugzilla"
-      image     = "395594542180.dkr.ecr.${var.eg_aws_region}.amazonaws.com/insights-connector-bugzilla:latest"
+      image     = "${var.eg_account_id}.dkr.ecr.${var.eg_aws_region}.amazonaws.com/insights-connector-bugzilla:latest"
       cpu       = 128
       memory    = 512
       essential = true
@@ -227,7 +227,7 @@ resource "aws_ecs_task_definition" "insights-connector-github-task" {
   container_definitions = jsonencode([
     {
       name      = "insights-connector-github"
-      image     = "395594542180.dkr.ecr.${var.eg_aws_region}.amazonaws.com/insights-connector-github:latest"
+      image     = "${var.eg_account_id}.dkr.ecr.${var.eg_aws_region}.amazonaws.com/insights-connector-github:latest"
       cpu       = 128
       memory    = 512
       essential = true
@@ -257,7 +257,7 @@ resource "aws_ecs_task_definition" "insights-connector-bugzillarest-task" {
   container_definitions = jsonencode([
     {
       name      = "insights-connector-bugzillarest"
-      image     = "395594542180.dkr.ecr.${var.eg_aws_region}.amazonaws.com/insights-connector-bugzillarest:latest"
+      image     = "${var.eg_account_id}.dkr.ecr.${var.eg_aws_region}.amazonaws.com/insights-connector-bugzillarest:latest"
       cpu       = 128
       memory    = 512
       essential = true
@@ -287,7 +287,7 @@ resource "aws_ecs_task_definition" "insights-connector-dockerhub-task" {
   container_definitions = jsonencode([
     {
       name      = "insights-connector-dockerhub"
-      image     = "395594542180.dkr.ecr.${var.eg_aws_region}.amazonaws.com/insights-connector-dockerhub:latest"
+      image     = "${var.eg_account_id}.dkr.ecr.${var.eg_aws_region}.amazonaws.com/insights-connector-dockerhub:latest"
       cpu       = 128
       memory    = 512
       essential = true
