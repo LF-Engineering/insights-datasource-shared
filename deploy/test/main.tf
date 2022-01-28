@@ -7,7 +7,7 @@ provider "aws" {
 terraform {
   backend "s3" {
     bucket         = "insights-v2-dev"
-    key            = "terraform/terraform.tfstate"
+    key            = "terraform/connector-ecs-tasks/terraform.tfstate"
     region         = "us-east-2" # this cant be replaced with the variable
     encrypt        = true
     kms_key_id     = "alias/terraform-bucket-key"
