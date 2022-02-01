@@ -272,6 +272,96 @@ resource "aws_ecs_task_definition" "insights-connector-dockerhub-task" {
 
 }
 
+/* ECS jenkins connector task definition */
+resource "aws_ecs_task_definition" "insights-connector-jenkins-task" {
+  family = "insights-connector-jenkins-task"
+  requires_compatibilities = ["FARGATE"]
+  network_mode = "awsvpc"
+  cpu = "256"
+  memory = "512"
+  execution_role_arn = aws_iam_role.ecs_task_execution_role.arn
+  task_role_arn = aws_iam_role.ecs_task_role.arn
+  container_definitions = jsonencode([
+    {
+      name      = "insights-connector-jenkins"
+      image     = "844390194980.dkr.ecr.${var.eg_aws_region}.amazonaws.com/insights-connector-jenkins:stable"
+      cpu       = 128
+      memory    = 512
+      essential = true
+      logConfiguration: {
+        "logDriver": "awslogs",
+        "options": {
+          "awslogs-group": "insights-connector-jenkins-task",
+          "awslogs-region": var.eg_aws_region,
+          "awslogs-create-group": "true",
+          "awslogs-stream-prefix": "ecs"
+        }
+      }
+    }
+  ])
+
+}
+
+/* ECS circleci connector task definition */
+resource "aws_ecs_task_definition" "insights-connector-circleci-task" {
+  family = "insights-connector-circleci-task"
+  requires_compatibilities = ["FARGATE"]
+  network_mode = "awsvpc"
+  cpu = "256"
+  memory = "512"
+  execution_role_arn = aws_iam_role.ecs_task_execution_role.arn
+  task_role_arn = aws_iam_role.ecs_task_role.arn
+  container_definitions = jsonencode([
+    {
+      name      = "insights-connector-circleci"
+      image     = "844390194980.dkr.ecr.${var.eg_aws_region}.amazonaws.com/insights-connector-circleci:stable"
+      cpu       = 128
+      memory    = 512
+      essential = true
+      logConfiguration: {
+        "logDriver": "awslogs",
+        "options": {
+          "awslogs-group": "insights-connector-circleci-task",
+          "awslogs-region": var.eg_aws_region,
+          "awslogs-create-group": "true",
+          "awslogs-stream-prefix": "ecs"
+        }
+      }
+    }
+  ])
+
+}
+
+/* ECS rocketchat connector task definition */
+resource "aws_ecs_task_definition" "insights-connector-rocketchat-task" {
+  family = "insights-connector-rocketchat-task"
+  requires_compatibilities = ["FARGATE"]
+  network_mode = "awsvpc"
+  cpu = "256"
+  memory = "512"
+  execution_role_arn = aws_iam_role.ecs_task_execution_role.arn
+  task_role_arn = aws_iam_role.ecs_task_role.arn
+  container_definitions = jsonencode([
+    {
+      name      = "insights-connector-rocketchat"
+      image     = "844390194980.dkr.ecr.${var.eg_aws_region}.amazonaws.com/insights-connector-rocketchat:stable"
+      cpu       = 128
+      memory    = 512
+      essential = true
+      logConfiguration: {
+        "logDriver": "awslogs",
+        "options": {
+          "awslogs-group": "insights-connector-rocketchat-task",
+          "awslogs-region": var.eg_aws_region,
+          "awslogs-create-group": "true",
+          "awslogs-stream-prefix": "ecs"
+        }
+      }
+    }
+  ])
+
+}
+
 resource "aws_security_group" "security_group" {
   name        = "example-task-security-group"
   vpc_id      = aws_vpc.main.id
