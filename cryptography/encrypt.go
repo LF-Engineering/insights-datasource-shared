@@ -4,6 +4,10 @@ import (
 	"crypto/aes"
 	"crypto/cipher"
 	"encoding/base64"
+	"errors"
+	"os"
+
+	"github.com/LF-Engineering/insights-datasource-shared/aws/ssm"
 )
 
 // Encryption ..
@@ -13,12 +17,41 @@ type Encryption struct {
 }
 
 // NewEncryptionClient returns an instance of the encryption client
-func NewEncryptionClient(key string, bytes []byte) (*Encryption, error) {
-	block, err := aes.NewCipher([]byte(key))
+func NewEncryptionClient() (*Encryption, error) {
+	encryptionKey := os.Getenv("ENCRYPTION_KEY")
+	if encryptionKey == "" {
+		return nil, errors.New("ENCRYPTION_KEY is empty")
+	}
+
+	encryptionByteString := os.Getenv("ENCRYPTION_BYTES")
+	if encryptionByteString == "" {
+		return nil, errors.New("ENCRYPTION_BYTES is empty")
+	}
+
+	c, err := ssm.NewSSMClient()
 	if err != nil {
 		return nil, err
 	}
-	return &Encryption{block: block, bytes: bytes}, nil
+
+	p1 := c.Param(encryptionKey, true, false, "secureString", "secureString", "")
+	valueKey, err := p1.GetValue()
+	if err != nil {
+		return nil, err
+	}
+
+	p2 := c.Param(encryptionByteString, true, false, "secureString", "secureString", "")
+	valueBytes, err := p2.GetValue()
+	if err != nil {
+		return nil, err
+	}
+
+	encryptionByte := []byte(valueBytes)
+
+	block, err := aes.NewCipher([]byte(valueKey))
+	if err != nil {
+		return nil, err
+	}
+	return &Encryption{block: block, bytes: encryptionByte}, nil
 }
 
 // Encrypt returns a ciphertext from a plaintext
