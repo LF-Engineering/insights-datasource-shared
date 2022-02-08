@@ -122,3 +122,34 @@ func (m *Manager) Delete(key string) error {
 
 	return nil
 }
+
+// SaveWithKey save data with specific key/path as an object in s3
+func (m *Manager) SaveWithKey(payload []byte, objectKey string) error {
+	var bucket, key string
+	var timeout time.Duration
+
+	b := flag.Lookup("b")
+	k := flag.Lookup("k")
+	d := flag.Lookup("d")
+
+	if b == nil && k == nil && d == nil {
+		flag.StringVar(&bucket, "b", m.bucketName, "Bucket name.")
+		flag.StringVar(&key, "k", objectKey, "Object key name.")
+		flag.DurationVar(&timeout, "d", 0, "Upload timeout.")
+		flag.Parse()
+	}
+
+	sess := session.Must(session.NewSession(&aws.Config{Region: aws.String(m.region)}))
+	svc := s3.New(sess)
+
+	r := bytes.NewReader(payload)
+
+	// Uploads the object to S3. The Context will interrupt the request if the
+	// timeout expires.
+	_, err := svc.PutObject(&s3.PutObjectInput{
+		Bucket: aws.String(m.bucketName),
+		Key:    aws.String(objectKey),
+		Body:   r,
+	})
+	return err
+}
