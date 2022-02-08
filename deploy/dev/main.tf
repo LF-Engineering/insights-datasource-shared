@@ -604,6 +604,11 @@ resource "aws_iam_role_policy_attachment" "task_role_s3_policy_attachment" {
   policy_arn = "arn:aws:iam::aws:policy/AmazonS3FullAccess"
 }
 
+resource "aws_iam_role_policy_attachment" "task_role_ssm_policy_attachment" {
+  role       = aws_iam_role.ecs_task_role.name
+  policy_arn = "arn:aws:iam::aws:policy/AmazonSSMReadOnlyAccess"
+}
+
 resource "aws_iam_role_policy_attachment" "task_role_cloudwatch_policy_attachment" {
   role       = aws_iam_role.ecs_task_role.name
   policy_arn = "arn:aws:iam::aws:policy/CloudWatchLogsFullAccess"
