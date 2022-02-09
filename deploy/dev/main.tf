@@ -548,6 +548,66 @@ resource "aws_ecs_service" "dockerhub" {
 
 }
 
+/* ecs circleci service */
+resource "aws_ecs_service" "circleci" {
+  name            = "insights-circleci"
+  cluster         = aws_ecs_cluster.insights-ecs-cluster.id
+  task_definition = aws_ecs_task_definition.insights-connector-circleci-task.arn
+  launch_type                        = "FARGATE"
+  scheduling_strategy                = "REPLICA"
+  network_configuration {
+    security_groups = [aws_security_group.security_group.id]
+    subnets = [aws_subnet.main.id]
+    assign_public_ip = true
+  }
+
+}
+
+/* ecs confluence service */
+resource "aws_ecs_service" "confluence" {
+  name            = "insights-confluence"
+  cluster         = aws_ecs_cluster.insights-ecs-cluster.id
+  task_definition = aws_ecs_task_definition.insights-connector-confluence-task.arn
+  launch_type                        = "FARGATE"
+  scheduling_strategy                = "REPLICA"
+  network_configuration {
+    security_groups = [aws_security_group.security_group.id]
+    subnets = [aws_subnet.main.id]
+    assign_public_ip = true
+  }
+
+}
+
+/* ecs rocketchat service */
+resource "aws_ecs_service" "rocketchat" {
+  name            = "insights-rocketchat"
+  cluster         = aws_ecs_cluster.insights-ecs-cluster.id
+  task_definition = aws_ecs_task_definition.insights-connector-rocketchat-task.arn
+  launch_type                        = "FARGATE"
+  scheduling_strategy                = "REPLICA"
+  network_configuration {
+    security_groups = [aws_security_group.security_group.id]
+    subnets = [aws_subnet.main.id]
+    assign_public_ip = true
+  }
+
+}
+
+/* ecs jenkins service */
+resource "aws_ecs_service" "jenkins" {
+  name            = "insights-jenkins"
+  cluster         = aws_ecs_cluster.insights-ecs-cluster.id
+  task_definition = aws_ecs_task_definition.insights-connector-jenkins-task.arn
+  launch_type                        = "FARGATE"
+  scheduling_strategy                = "REPLICA"
+  network_configuration {
+    security_groups = [aws_security_group.security_group.id]
+    subnets = [aws_subnet.main.id]
+    assign_public_ip = true
+  }
+
+}
+
 /* iam roles */
 
 resource "aws_iam_role" "ecs_task_execution_role" {
