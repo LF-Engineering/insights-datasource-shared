@@ -406,7 +406,7 @@ func CreateESCache(ctx *Ctx) {
 
 // GetLastUpdate - get last update date from ElasticSearch
 func GetLastUpdate(ctx *Ctx, key string) (lastUpdate *time.Time) {
-	if ctx.ESURL == "" {
+	if ctx.ESURL == "" || ctx.NoIncremental {
 		return
 	}
 	// curl -s -XPOST -H 'Content-type: application/json' '${URL}/last-update-cache/_search?size=0' -d '{"query":{"bool":{"filter":{"term":{"key.keyword":"ds:endpoint"}}}},"aggs":{"m":{"max":{"field":"last_update"}}}}' | jq -r '.aggregations.m.value_as_string'
@@ -466,7 +466,7 @@ func GetLastUpdate(ctx *Ctx, key string) (lastUpdate *time.Time) {
 
 // SetLastUpdate - set last update date for a given data source
 func SetLastUpdate(ctx *Ctx, key string, when time.Time) {
-	if ctx.ESURL == "" || when.Before(unixEpoch) {
+	if ctx.ESURL == "" || ctx.NoIncremental || when.Before(unixEpoch) {
 		return
 	}
 	escapedKey := JSONEscape(ctx.DS + ":" + key)
