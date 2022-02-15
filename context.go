@@ -32,6 +32,7 @@ type Ctx struct {
 	PackSize      int                 // data sources are outputting events in packs - here you can specify pack size, default is 1000
 	ESURL         string              // set ES cluster URL (optional but rather recommended)
 	NoCache       bool                // do not cache *any* HTTP requests
+	NoIncremental bool                // do not use incremental sync, always process full data instead
 	Categories    map[string]struct{} // some data sources allow specifying categories, you can pass them with --dsname-categories 'category1,category2,...' flag, it will keep unique set of them.
 	DateFrom      *time.Time          // date from (for resuming)
 	DateTo        *time.Time          // date to (for limiting)
@@ -91,6 +92,7 @@ func (ctx *Ctx) Init() {
 	flagPackSize := flag.Int(ctx.DSFlag+"pack-size", 1000, "data sources are outputting events in packs - here you can specify pack size, default is 1000")
 	flagESURL := flag.String(ctx.DSFlag+"es-url", "", "ElasticSearch URL (optional but recommended)")
 	flagNoCache := flag.Bool(ctx.DSFlag+"no-cache", false, "do *NOT* cache any HTTP requests")
+	flagNoIncremental := flag.Bool(ctx.DSFlag+"no-incremental", false, "do not use incremental sync")
 	flagDateFrom := flag.String(ctx.DSFlag+"date-from", "", "date-from (for resuming)")
 	flagDateTo := flag.String(ctx.DSFlag+"date-to", "", "date-to (for limiting)")
 	flagCategories := flag.String(ctx.DSFlag+"categories", "", "some data sources allow specifying categories, you can pass them with --dsname-categories 'category1,category2,...' flag, it will keep unique set of them.")
@@ -253,6 +255,15 @@ func (ctx *Ctx) Init() {
 	noCache, present := ctx.BoolEnvSet("NO_CACHE")
 	if present {
 		ctx.NoCache = noCache
+	}
+
+	// No incremental sync
+	if FlagPassed(ctx, "no-incremental") {
+		ctx.NoIncremental = *flagNoIncremental
+	}
+	noIncremental, present := ctx.BoolEnvSet("NO_INCREMENTAL")
+	if present {
+		ctx.NoIncremental = noIncremental
 	}
 
 	// Events pack size
