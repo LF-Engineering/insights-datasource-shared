@@ -65,14 +65,14 @@ terraform_plan: &terraform_plan
     name: terraform plan
     command: |
       source $BASH_ENV
-      cd deploy/${STAGE} && TF_VAR_aws_access_key=$AWS_ACCESS_KEY_ID TF_VAR_aws_secret_key=$AWS_SECRET_ACCESS_KEY TF_VAR_eg_aws_region=$AWS_DEFAULT_REGION terraform plan -out tfapply
+      cd deploy/${STAGE} && TF_VAR_aws_access_key=$AWS_ACCESS_KEY_ID TF_VAR_aws_secret_key=$AWS_SECRET_ACCESS_KEY TF_VAR_eg_aws_region=$AWS_DEFAULT_REGION TF_VAR_eg_account_id=$AWS_ACCOUNT_ID terraform plan -out tfapply
 
 terraform_apply: &terraform_apply
   run:
     name: terraform apply
     command: |
       source $BASH_ENV
-      cd deploy/${STAGE} && TF_VAR_aws_access_key=$AWS_ACCESS_KEY_ID TF_VAR_aws_secret_key=$AWS_SECRET_ACCESS_KEY TF_VAR_eg_aws_region=$AWS_DEFAULT_REGION terraform apply --auto-approve tfapply
+      cd deploy/${STAGE} && TF_VAR_aws_access_key=$AWS_ACCESS_KEY_ID TF_VAR_aws_secret_key=$AWS_SECRET_ACCESS_KEY TF_VAR_eg_aws_region=$AWS_DEFAULT_REGION TF_VAR_eg_account_id=$AWS_ACCOUNT_ID terraform apply --auto-approve tfapply
 
 jobs:
   deploy_prod:
@@ -140,6 +140,8 @@ workflows:
     jobs:
       - validate_dev
       - deploy_dev:
+          context:
+            - development
           filters:
             branches:
               only: main
@@ -152,6 +154,8 @@ workflows:
             tags:
               only: /^v\d+(\.\d+)?(\.\d+)?$/
       - deploy_test:
+          context:
+            - test
           filters:
             branches:
               ignore: /.*/
@@ -175,6 +179,8 @@ workflows:
           requires:
             - validate_prod
       - deploy_prod:
+          context:
+            - production
           filters:
             branches:
               ignore: /.*/
