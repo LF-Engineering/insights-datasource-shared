@@ -13,6 +13,8 @@ import (
 	"sync"
 	"time"
 
+	"github.com/LF-Engineering/lfx-event-schema/service/insights"
+
 	jsoniter "github.com/json-iterator/go"
 )
 
@@ -455,4 +457,18 @@ func AsJSON(data interface{}) string {
 		return fmt.Sprintf("%T: %+v", data, data)
 	}
 	return string(pretty)
+}
+
+// DedupContributors - there can be no multiple contributors having the same ID & role
+func DedupContributors(inContributors []insights.Contributor) (outContributors []insights.Contributor) {
+	m := make(map[string]struct{})
+	for _, contributor := range inContributors {
+		key := string(contributor.Role) + ":" + contributor.Identity.ID
+		_, found := m[key]
+		if !found {
+			outContributors = append(outContributors, contributor)
+			m[key] = struct{}{}
+		}
+	}
+	return
 }
