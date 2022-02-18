@@ -59,7 +59,7 @@ terraform_validate: &terraform_validate
     command: |
       source $BASH_ENV
       cd deploy/${STAGE} && terraform validate
-      cd deploy/${STAGE} && TF_VAR_aws_access_key=$AWS_ACCESS_KEY_ID TF_VAR_aws_secret_key=$AWS_SECRET_ACCESS_KEY TF_VAR_eg_aws_region=us-east-1 TF_VAR_eg_account_id=395594542180 terraform import aws_s3_bucket_versioning.terraform-state terraform-state
+      TF_VAR_aws_access_key=$AWS_ACCESS_KEY_ID TF_VAR_aws_secret_key=$AWS_SECRET_ACCESS_KEY TF_VAR_eg_aws_region=us-east-1 TF_VAR_eg_account_id=395594542180 terraform import aws_s3_bucket_versioning.terraform-state terraform-state
 
 terraform_plan: &terraform_plan
   run:
