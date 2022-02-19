@@ -3,6 +3,7 @@ package cache
 import (
 	"encoding/json"
 	"fmt"
+	s3util "github.com/LF-Engineering/insights-datasource-shared/aws/s3"
 	"github.com/aws/aws-sdk-go/aws/awserr"
 	"github.com/aws/aws-sdk-go/service/s3"
 	"time"
@@ -11,22 +12,25 @@ import (
 const (
 	Path         = "cache/%s/%s"
 	LastSyncFile = "0000-last-sync"
+	Bucket       = "insights-v2-%s"
+	Region       = "us-east-2"
 )
 
 type Manager struct {
-	S3Provider S3Provider
-	Connector  string
+	S3Manager S3Manager
+	Connector string
 }
 
-func NewManager(s3Provider S3Provider, connector string) *Manager {
+func NewManager(connector string, environment string) *Manager {
+	s3Manager := s3util.NewManager(fmt.Sprintf(Bucket, environment), Region)
 	return &Manager{
-		S3Provider: s3Provider,
-		Connector:  connector,
+		S3Manager: s3Manager,
+		Connector: connector,
 	}
 }
 
-// S3Provider used in connecting to s3
-type S3Provider interface {
+// S3Manager used in connecting to s3
+type S3Manager interface {
 	Save(payload []byte) error
 	SaveWithKey(payload []byte, key string) error
 	GetKeys() ([]string, error)
@@ -37,7 +41,7 @@ type S3Provider interface {
 // IsKeyCreated check if the key already exists
 func (m *Manager) IsKeyCreated(id string) (bool, error) {
 	key := fmt.Sprintf(Path, m.Connector, id)
-	_, err := m.S3Provider.Get(key)
+	_, err := m.S3Manager.Get(key)
 	if err != nil {
 		if aerr, ok := err.(awserr.Error); ok {
 			switch aerr.Code() {
@@ -65,7 +69,7 @@ func (m *Manager) Create(data []map[string]interface{}) error {
 			return err
 		}
 
-		err = m.S3Provider.SaveWithKey(b, key)
+		err = m.S3Manager.SaveWithKey(b, key)
 		if err != nil {
 			return err
 		}
@@ -80,7 +84,7 @@ func (m *Manager) GetLastSync() (time.Time, error) {
 	if err != nil {
 		return from, err
 	}
-	d, err := m.S3Provider.Get(key)
+	d, err := m.S3Manager.Get(key)
 	if err != nil {
 		if aerr, ok := err.(awserr.Error); ok {
 			switch aerr.Code() {
@@ -107,7 +111,7 @@ func (m *Manager) SetLastSync(lastSync time.Time) error {
 	if err != nil {
 		return err
 	}
-	err = m.S3Provider.SaveWithKey(b, key)
+	err = m.S3Manager.SaveWithKey(b, key)
 	if err != nil {
 		return err
 	}
