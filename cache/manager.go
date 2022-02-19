@@ -22,12 +22,11 @@ type Manager struct {
 	endpoint  string
 }
 
-func NewManager(connector string, environment string, endpoint string) *Manager {
+func NewManager(connector string, environment string) *Manager {
 	s3Manager := s3util.NewManager(fmt.Sprintf(Bucket, environment), Region)
 	return &Manager{
 		s3Manager: s3Manager,
 		connector: connector,
-		endpoint:  endpoint,
 	}
 }
 
