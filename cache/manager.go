@@ -91,7 +91,7 @@ func (m *Manager) GetLastSync(endpoint string) (time.Time, error) {
 		if aerr, ok := err.(awserr.Error); ok {
 			switch aerr.Code() {
 			case s3.ErrCodeNoSuchKey:
-				return from, m.SetLastSync(from)
+				return from, m.SetLastSync(endpoint, from)
 			default:
 				return from, err
 			}
@@ -107,7 +107,7 @@ func (m *Manager) GetLastSync(endpoint string) (time.Time, error) {
 }
 
 // SetLastSync update connector last sync date
-func (m *Manager) SetLastSync(endpoint, lastSync time.Time) error {
+func (m *Manager) SetLastSync(endpoint string, lastSync time.Time) error {
 	key := fmt.Sprintf(Path, m.connector, endpoint, LastSyncFile)
 	b, err := json.Marshal(lastSync)
 	if err != nil {
