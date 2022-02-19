@@ -52,8 +52,8 @@ func (m *Manager) IsKeyCreated(id string) (bool, error) {
 	return true, nil
 }
 
-// CreateCache create new cache record
-func (m *Manager) CreateCache(data []map[string]interface{}) error {
+// Create new cache record
+func (m *Manager) Create(data []map[string]interface{}) error {
 	for _, v := range data {
 		id, ok := v["id"]
 		if !ok {
