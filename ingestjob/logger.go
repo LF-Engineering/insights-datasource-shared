@@ -124,6 +124,7 @@ func (s *Logger) Read(connector string, status string) ([]Log, error) {
 	return logs, nil
 }
 
+// Count ...
 func (s *Logger) Count(connector string, status string) (int, error) {
 	if status != InProgress && status != Failed && status != Done {
 		return 0, fmt.Errorf("error: log status must be one of [%s, %s, %s ]", InProgress, Failed, Done)
@@ -176,7 +177,7 @@ func (s *Logger) Filter(log *Log) ([]Log, error) {
 		return []Log{}, fmt.Errorf("error: log status must be one of [%s, %s, %s ]", InProgress, Failed, Done)
 	}
 
-	must := CreateMustTerms(log)
+	must := createMustTerms(log)
 	query := map[string]interface{}{
 		"query": map[string]interface{}{
 			"bool": map[string]interface{}{
@@ -199,7 +200,7 @@ func (s *Logger) Filter(log *Log) ([]Log, error) {
 	return logs, nil
 }
 
-func CreateMustTerms(log *Log) []map[string]interface{} {
+func createMustTerms(log *Log) []map[string]interface{} {
 	must := make([]map[string]interface{}, 0)
 
 	if log.Status != "" {
