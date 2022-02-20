@@ -27,7 +27,6 @@ resource "aws_kms_alias" "key-alias" {
 
 resource "aws_s3_bucket" "terraform-state" {
   bucket = "insights-v2-dev"
-  acl    = "private"
 
   server_side_encryption_configuration {
     rule {
@@ -37,6 +36,11 @@ resource "aws_s3_bucket" "terraform-state" {
       }
     }
   }
+}
+
+resource "aws_s3_bucket_acl" "terraform-state-acl" {
+  bucket = aws_s3_bucket.terraform-state.id
+  acl    = "private"
 }
 
 resource "aws_s3_bucket_public_access_block" "block" {
