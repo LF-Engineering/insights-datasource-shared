@@ -463,7 +463,7 @@ resource "aws_ecs_task_definition" "insights-connector-googlegroups-task" {
   container_definitions = jsonencode([
     {
       name      = "insights-connector-googlegroups"
-      image     = "395594542180.dkr.ecr.${var.eg_aws_region}.amazonaws.com/insights-connector-googlegroups:latest"
+      image     = "${var.eg_account_id}.dkr.ecr.${var.eg_aws_region}.amazonaws.com/insights-connector-googlegroups:latest"
       cpu       = 128
       memory    = 512
       essential = true
