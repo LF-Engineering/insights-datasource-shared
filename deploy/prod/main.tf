@@ -26,21 +26,17 @@ resource "aws_kms_alias" "key-alias" {
 }
 
 resource "aws_s3_bucket" "terraform-state" {
-  bucket = "insights-v2-dev"
+  bucket = "insights-v2-prod"
+
+  tags = {
+    Name        = "Insights V2 Prod"
+    Environment = "prod"
+  }
+}
+
+resource "aws_s3_bucket_acl" "terraform-state-acl" {
+  bucket = aws_s3_bucket.terraform-state.id
   acl    = "private"
-
-  versioning {
-    enabled = true
-  }
-
-  server_side_encryption_configuration {
-    rule {
-      apply_server_side_encryption_by_default {
-        kms_master_key_id = aws_kms_key.terraform-bucket-key.arn
-        sse_algorithm     = "aws:kms"
-      }
-    }
-  }
 }
 
 resource "aws_s3_bucket_public_access_block" "block" {

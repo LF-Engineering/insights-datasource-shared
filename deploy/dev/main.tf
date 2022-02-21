@@ -27,20 +27,16 @@ resource "aws_kms_alias" "key-alias" {
 
 resource "aws_s3_bucket" "terraform-state" {
   bucket = "insights-v2-dev"
+
+  tags = {
+    Name        = "Insights V2 Dev"
+    Environment = "dev"
+  }
+}
+
+resource "aws_s3_bucket_acl" "terraform-state-acl" {
+  bucket = aws_s3_bucket.terraform-state.id
   acl    = "private"
-
-  versioning {
-    enabled = true
-  }
-
-  server_side_encryption_configuration {
-    rule {
-      apply_server_side_encryption_by_default {
-        kms_master_key_id = aws_kms_key.terraform-bucket-key.arn
-        sse_algorithm     = "aws:kms"
-      }
-    }
-  }
 }
 
 resource "aws_s3_bucket_public_access_block" "block" {
@@ -385,6 +381,36 @@ resource "aws_ecs_task_definition" "insights-connector-rocketchat-task" {
         "logDriver": "awslogs",
         "options": {
           "awslogs-group": "insights-ecs-rocketchat",
+          "awslogs-region": "us-east-2",
+          "awslogs-create-group": "true",
+          "awslogs-stream-prefix": "ecs"
+        }
+      }
+    }
+  ])
+
+}
+
+/* ECS pipermail connector task definition */
+resource "aws_ecs_task_definition" "insights-connector-pipermail-task" {
+  family = "insights-connector-pipermail-task"
+  requires_compatibilities = ["FARGATE"]
+  network_mode = "awsvpc"
+  cpu = "256"
+  memory = "512"
+  execution_role_arn = aws_iam_role.ecs_task_execution_role.arn
+  task_role_arn = aws_iam_role.ecs_task_role.arn
+  container_definitions = jsonencode([
+    {
+      name      = "insights-connector-pipermail"
+      image     = "395594542180.dkr.ecr.${var.eg_aws_region}.amazonaws.com/insights-connector-pipermail:latest"
+      cpu       = 128
+      memory    = 512
+      essential = true
+      logConfiguration: {
+        "logDriver": "awslogs",
+        "options": {
+          "awslogs-group": "insights-ecs-pipermail",
           "awslogs-region": "us-east-2",
           "awslogs-create-group": "true",
           "awslogs-stream-prefix": "ecs"
