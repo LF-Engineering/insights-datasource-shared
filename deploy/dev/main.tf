@@ -313,7 +313,7 @@ resource "aws_ecs_task_definition" "insights-connector-jenkins-task" {
   container_definitions = jsonencode([
     {
       name      = "insights-connector-jenkins"
-      image     = "395594542180.dkr.ecr.${var.eg_aws_region}.amazonaws.com/insights-connector-jenkins:latest"
+      image     = "${var.eg_account_id}.dkr.ecr.${var.eg_aws_region}.amazonaws.com/insights-connector-jenkins:latest"
       cpu       = 128
       memory    = 512
       essential = true
@@ -343,7 +343,7 @@ resource "aws_ecs_task_definition" "insights-connector-circleci-task" {
   container_definitions = jsonencode([
     {
       name      = "insights-connector-circleci"
-      image     = "395594542180.dkr.ecr.${var.eg_aws_region}.amazonaws.com/insights-connector-circleci:latest"
+      image     = "${var.eg_account_id}.dkr.ecr.${var.eg_aws_region}.amazonaws.com/insights-connector-circleci:latest"
       cpu       = 128
       memory    = 512
       essential = true
@@ -373,7 +373,7 @@ resource "aws_ecs_task_definition" "insights-connector-rocketchat-task" {
   container_definitions = jsonencode([
     {
       name      = "insights-connector-rocketchat"
-      image     = "395594542180.dkr.ecr.${var.eg_aws_region}.amazonaws.com/insights-connector-rocketchat:latest"
+      image     = "${var.eg_account_id}.dkr.ecr.${var.eg_aws_region}.amazonaws.com/insights-connector-rocketchat:latest"
       cpu       = 128
       memory    = 512
       essential = true
@@ -403,7 +403,7 @@ resource "aws_ecs_task_definition" "insights-connector-pipermail-task" {
   container_definitions = jsonencode([
     {
       name      = "insights-connector-pipermail"
-      image     = "395594542180.dkr.ecr.${var.eg_aws_region}.amazonaws.com/insights-connector-pipermail:latest"
+      image     = "${var.eg_account_id}.dkr.ecr.${var.eg_aws_region}.amazonaws.com/insights-connector-pipermail:latest"
       cpu       = 128
       memory    = 512
       essential = true
@@ -411,6 +411,36 @@ resource "aws_ecs_task_definition" "insights-connector-pipermail-task" {
         "logDriver": "awslogs",
         "options": {
           "awslogs-group": "insights-ecs-pipermail",
+          "awslogs-region": "us-east-2",
+          "awslogs-create-group": "true",
+          "awslogs-stream-prefix": "ecs"
+        }
+      }
+    }
+  ])
+
+}
+
+/* ECS groupsio connector task definition */
+resource "aws_ecs_task_definition" "insights-connector-groupsio-task" {
+  family = "insights-connector-groupsio-task"
+  requires_compatibilities = ["FARGATE"]
+  network_mode = "awsvpc"
+  cpu = "256"
+  memory = "1024"
+  execution_role_arn = aws_iam_role.ecs_task_execution_role.arn
+  task_role_arn = aws_iam_role.ecs_task_role.arn
+  container_definitions = jsonencode([
+    {
+      name      = "insights-connector-groupsio"
+      image     = "${var.eg_account_id}.dkr.ecr.${var.eg_aws_region}.amazonaws.com/insights-connector-groupsio:latest"
+      cpu       = 256
+      memory    = 1024
+      essential = true
+      logConfiguration: {
+        "logDriver": "awslogs",
+        "options": {
+          "awslogs-group": "insights-ecs-groupsio",
           "awslogs-region": "us-east-2",
           "awslogs-create-group": "true",
           "awslogs-stream-prefix": "ecs"
