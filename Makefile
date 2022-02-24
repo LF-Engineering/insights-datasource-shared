@@ -8,19 +8,24 @@ GO_LINT=golint -set_exit_status
 GO_VET=go vet
 GO_IMPORTS=goimports -w
 GO_ERRCHECK=errcheck -asserts -ignore '[FS]?[Pp]rint*'
-GO_FILES=context.go email.go error.go es.go exec.go json.go log.go mbox.go redacted.go request.go threads.go time.go utils.go uuid.go firehose/firehose.go
+GO_FILES=context.go email.go error.go es.go exec.go json.go log.go mbox.go redacted.go request.go threads.go time.go utils.go uuid.go
+ALL_GO_FILES=context.go email.go error.go es.go exec.go json.go log.go mbox.go redacted.go request.go threads.go time.go utils.go uuid.go firehose/firehose.go
 all: check build
 check: fmt lint imports vet errcheck
-lint: ${GO_FILES}
+lint: ${ALL_GO_FILES}
 	${GO_LINT}
-fmt: ${GO_FILES}
+fmt: ${ALL_GO_FILES}
 	${GO_FMT} ${GO_FILES}
-vet: ${GO_FILES}
+	${GO_FMT} firehose/firehose.go
+vet: ${ALL_GO_FILES}
 	${GO_VET} ${GO_FILES}
-imports: ${GO_FILES}
+	${GO_VET} firehose/firehose.go
+imports: ${ALL_GO_FILES}
 	${GO_IMPORTS} ${GO_FILES}
-errcheck: ${GO_FILES}
+	${GO_IMPORTS} firehose/firehose.go
+errcheck: ${ALL_GO_FILES}
 	${GO_ERRCHECK} ${GO_FILES}
-build: ${GO_FILES}
+	${GO_ERRCHECK} firehose/firehose.go
+build: ${ALL_GO_FILES}
 	${GO_BUILD}
 .PHONY: all
