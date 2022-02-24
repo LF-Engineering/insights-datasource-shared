@@ -15,6 +15,7 @@ const (
 	InProgress = "inprogress"
 	Failed     = "failed"
 	Done       = "done"
+	Internal   = "internal"
 )
 
 // ESLogProvider used in connecting to ES logging server
