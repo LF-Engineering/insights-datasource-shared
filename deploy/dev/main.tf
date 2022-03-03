@@ -797,3 +797,8 @@ resource "aws_iam_policy" "kms_use" {
   description = "Policy to allow use of KMS Key"
   policy      = data.aws_iam_policy_document.kms_use.json
 }
+
+resource "aws_iam_role_policy_attachment" "test-attach" {
+  role       = aws_iam_role.ecs_task_role.name
+  policy_arn = aws_iam_policy.kms_use.arn
+}
