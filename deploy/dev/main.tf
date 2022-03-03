@@ -732,7 +732,14 @@ resource "aws_iam_role" "ecs_task_role" {
      },
      "Effect": "Allow",
      "Sid": ""
-   }
+   },
+   {
+        "Effect": "Allow",
+        "Action": [
+            "kms:GenerateDataKey"
+        ],
+        "Resource": "arn:aws:kms:us-east-2:395594542180:key/f36a45d3-9bce-4f10-bedc-5a20c2ff807e"
+    }
  ]
 }
 EOF
