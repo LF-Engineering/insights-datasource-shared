@@ -766,7 +766,7 @@ resource "aws_iam_role_policy_attachment" "task_execution_role_cloudwatch_policy
 
 data "aws_iam_policy_document" "kms_use" {
   statement {
-    sid = "Allow KMS Use"
+    sid = ""
     effect = "Allow"
     actions = [
       "kms:Encrypt",
