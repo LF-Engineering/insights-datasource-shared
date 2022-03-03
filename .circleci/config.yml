@@ -144,7 +144,7 @@ workflows:
             - development
           filters:
             branches:
-              only: add-task-permissions #main
+              only: main
           requires:
             - validate_dev
       - validate_test:
