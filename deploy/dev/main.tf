@@ -784,7 +784,7 @@ data "aws_iam_policy_document" "kms_use" {
       #"kms:Decrypt",
       #"kms:ReEncrypt*",
       "kms:GenerateDataKey*",
-      #"kms:DescribeKey",
+      "kms:DescribeKey",
     ]
     resources = [
       "arn:aws:kms:us-east-2:${var.eg_account_id}:key/f36a45d3-9bce-4f10-bedc-5a20c2ff807e"
