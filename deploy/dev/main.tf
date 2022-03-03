@@ -732,14 +732,7 @@ resource "aws_iam_role" "ecs_task_role" {
      },
      "Effect": "Allow",
      "Sid": ""
-   },
-   {
-        "Effect": "Allow",
-        "Action": [
-            "kms:GenerateDataKey"
-        ],
-        "Resource": "arn:aws:kms:us-east-2:${var.eg_account_id}:key/f36a45d3-9bce-4f10-bedc-5a20c2ff807e"
-    }
+   }
  ]
 }
 EOF
@@ -769,4 +762,9 @@ resource "aws_iam_role_policy_attachment" "task_role_cloudwatch_policy_attachmen
 resource "aws_iam_role_policy_attachment" "task_execution_role_cloudwatch_policy_attachment" {
   role       = aws_iam_role.ecs_task_execution_role.name
   policy_arn = "arn:aws:iam::aws:policy/CloudWatchLogsFullAccess"
+}
+
+resource "aws_iam_role_policy_attachment" "task_role_s3_kms_policy_attachment" {
+  role       = aws_iam_role.ecs_task_role.name
+  policy_arn = "arn:aws:kms:us-east-2:${var.eg_account_id}:key/f36a45d3-9bce-4f10-bedc-5a20c2ff807e"
 }
