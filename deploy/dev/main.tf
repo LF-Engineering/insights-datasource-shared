@@ -764,7 +764,25 @@ resource "aws_iam_role_policy_attachment" "task_execution_role_cloudwatch_policy
   policy_arn = "arn:aws:iam::aws:policy/CloudWatchLogsFullAccess"
 }
 
-resource "aws_iam_role_policy_attachment" "task_role_s3_kms_policy_attachment" {
-  role       = aws_iam_role.ecs_task_role.name
-  policy_arn = "arn:aws:kms:us-east-2:${var.eg_account_id}:key/f36a45d3-9bce-4f10-bedc-5a20c2ff807e"
+data "aws_iam_policy_document" "kms_use" {
+  statement {
+    sid = "Allow KMS Use"
+    effect = "Allow"
+    actions = [
+      "kms:Encrypt",
+      "kms:Decrypt",
+      "kms:ReEncrypt*",
+      "kms:GenerateDataKey*",
+      "kms:DescribeKey",
+    ]
+    resources = [
+      "arn:aws:kms:us-east-2:${var.eg_account_id}:key/f36a45d3-9bce-4f10-bedc-5a20c2ff807e"
+    ]
+  }
+}
+
+resource "aws_iam_policy" "kms_use" {
+  name        = "kmsuse"
+  description = "Policy to allow use of KMS Key"
+  policy      = data.aws_iam_policy_document.kms_use.json
 }
