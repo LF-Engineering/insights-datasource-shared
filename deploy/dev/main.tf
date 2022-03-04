@@ -794,7 +794,7 @@ data "aws_iam_policy_document" "kms_use" {
 
 resource "aws_iam_policy" "kms_use" {
   name        = "kmsuse"
-  description = "Policy to allow use of KMS Key"
+  description = "Policy allow using KMS keys"
   policy      = data.aws_iam_policy_document.kms_use.json
 }
 
