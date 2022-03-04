@@ -780,9 +780,9 @@ data "aws_iam_policy_document" "kms_use" {
     sid = ""
     effect = "Allow"
     actions = [
-      #"kms:Encrypt",
-      #"kms:Decrypt",
-      #"kms:ReEncrypt*",
+      "kms:Encrypt",
+      "kms:Decrypt",
+      "kms:ReEncrypt*",
       "kms:GenerateDataKey*",
       "kms:DescribeKey",
     ]
