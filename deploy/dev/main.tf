@@ -75,15 +75,15 @@ resource "aws_ecs_task_definition" "insights-connector-git-task" {
   requires_compatibilities = ["FARGATE"]
   network_mode = "awsvpc"
   cpu = "256"
-  memory = "512"
+  memory = "1024"
   execution_role_arn = aws_iam_role.ecs_task_execution_role.arn
   task_role_arn = aws_iam_role.ecs_task_role.arn
   container_definitions = jsonencode([
     {
       name      = "insights-connector-git"
       image     = "${var.eg_account_id}.dkr.ecr.${var.eg_aws_region}.amazonaws.com/insights-connector-git:latest"
-      cpu       = 128
-      memory    = 512
+      cpu       = 256
+      memory    = 1024
       essential = true
       logConfiguration: {
         "logDriver": "awslogs",
@@ -228,15 +228,15 @@ resource "aws_ecs_task_definition" "insights-connector-github-task" {
   requires_compatibilities = ["FARGATE"]
   network_mode = "awsvpc"
   cpu = "256"
-  memory = "512"
+  memory = "1024"
   execution_role_arn = aws_iam_role.ecs_task_execution_role.arn
   task_role_arn = aws_iam_role.ecs_task_role.arn
   container_definitions = jsonencode([
     {
       name      = "insights-connector-github"
       image     = "${var.eg_account_id}.dkr.ecr.${var.eg_aws_region}.amazonaws.com/insights-connector-github:latest"
-      cpu       = 128
-      memory    = 512
+      cpu       = 256
+      memory    = 1024
       essential = true
       logConfiguration: {
         "logDriver": "awslogs",
