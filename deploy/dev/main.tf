@@ -39,6 +39,17 @@ resource "aws_s3_bucket_acl" "terraform-state-acl" {
   acl    = "private"
 }
 
+resource "aws_s3_bucket_server_side_encryption_configuration" "terraform-state-encryption-configuration" {
+  bucket = aws_s3_bucket.terraform-state.id
+
+    rule {
+      apply_server_side_encryption_by_default {
+        kms_master_key_id = aws_kms_key.terraform-bucket-key.arn
+        sse_algorithm     = "aws:kms"
+      }
+    }
+}
+
 resource "aws_s3_bucket_public_access_block" "block" {
   bucket = aws_s3_bucket.terraform-state.id
 
@@ -64,15 +75,15 @@ resource "aws_ecs_task_definition" "insights-connector-git-task" {
   requires_compatibilities = ["FARGATE"]
   network_mode = "awsvpc"
   cpu = "256"
-  memory = "512"
+  memory = "1024"
   execution_role_arn = aws_iam_role.ecs_task_execution_role.arn
   task_role_arn = aws_iam_role.ecs_task_role.arn
   container_definitions = jsonencode([
     {
       name      = "insights-connector-git"
       image     = "${var.eg_account_id}.dkr.ecr.${var.eg_aws_region}.amazonaws.com/insights-connector-git:latest"
-      cpu       = 128
-      memory    = 512
+      cpu       = 256
+      memory    = 1024
       essential = true
       logConfiguration: {
         "logDriver": "awslogs",
@@ -217,15 +228,15 @@ resource "aws_ecs_task_definition" "insights-connector-github-task" {
   requires_compatibilities = ["FARGATE"]
   network_mode = "awsvpc"
   cpu = "256"
-  memory = "512"
+  memory = "1024"
   execution_role_arn = aws_iam_role.ecs_task_execution_role.arn
   task_role_arn = aws_iam_role.ecs_task_role.arn
   container_definitions = jsonencode([
     {
       name      = "insights-connector-github"
       image     = "${var.eg_account_id}.dkr.ecr.${var.eg_aws_region}.amazonaws.com/insights-connector-github:latest"
-      cpu       = 128
-      memory    = 512
+      cpu       = 256
+      memory    = 1024
       essential = true
       logConfiguration: {
         "logDriver": "awslogs",
@@ -762,4 +773,32 @@ resource "aws_iam_role_policy_attachment" "task_role_cloudwatch_policy_attachmen
 resource "aws_iam_role_policy_attachment" "task_execution_role_cloudwatch_policy_attachment" {
   role       = aws_iam_role.ecs_task_execution_role.name
   policy_arn = "arn:aws:iam::aws:policy/CloudWatchLogsFullAccess"
+}
+
+data "aws_iam_policy_document" "kms_use" {
+  statement {
+    sid = ""
+    effect = "Allow"
+    actions = [
+      "kms:Encrypt",
+      "kms:Decrypt",
+      "kms:ReEncrypt*",
+      "kms:GenerateDataKey*",
+      "kms:DescribeKey",
+    ]
+    resources = [
+      "arn:aws:kms:${var.eg_aws_region}:${var.eg_account_id}:key/f36a45d3-9bce-4f10-bedc-5a20c2ff807e"
+    ]
+  }
+}
+
+resource "aws_iam_policy" "kms_use" {
+  name        = "kmsuse"
+  description = "Policy allows using KMS keys"
+  policy      = data.aws_iam_policy_document.kms_use.json
+}
+
+resource "aws_iam_role_policy_attachment" "test-attach" {
+  role       = aws_iam_role.ecs_task_role.name
+  policy_arn = aws_iam_policy.kms_use.arn
 }
