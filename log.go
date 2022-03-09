@@ -14,6 +14,7 @@ var (
 	gLoggerStatus        string
 	gLoggerConfiguration []map[string]string
 	gSync                bool
+	gConsoleAfterES      bool
 )
 
 // AddLogger - adds logger
@@ -27,10 +28,12 @@ func AddLogger(logger *logger.Logger, connector, status string, configuration []
 }
 
 // SetSyncMode - sets sync/async ES loging mode
-// gSyncMode: true - wait for log message to be sent to ES before exiting (sync mode)
-// gSyncMode: false - default, send log message to ES in goroutine and return immediately
-func SetSyncMode(sync bool) {
+// sync -> gSyncMode: true - wait for log message to be sent to ES before exiting (sync mode)
+// sync -> gSyncMode: false - default, send log message to ES in goroutine and return immediately
+// consoleAfterES -> gConsoleAfterES - will log on console after logged to ES
+func SetSyncMode(sync, consoleAfterES bool) {
 	gSync = sync
+	gConsoleAfterES = consoleAfterES
 }
 
 // Printf is a wrapper around Printf(...) that supports logging and removes redacted data.
@@ -38,13 +41,17 @@ func Printf(format string, args ...interface{}) {
 	// Actual logging to stdout & DB
 	now := time.Now()
 	msg := FilterRedacted(fmt.Sprintf("%s: "+format, append([]interface{}{ToYMDHMSDate(now)}, args...)...))
-	_, err := fmt.Printf("%s", msg)
-	if err != nil {
-		log.Printf("Err: %s", err.Error())
+	logConsole := func() {
+		_, err := fmt.Printf("%s", msg)
+		if err != nil {
+			log.Printf("Err: %s", err.Error())
+		}
+	}
+	if !gConsoleAfterES || gLogger == nil {
+		logConsole()
 	}
 	if gLogger != nil {
-		logf := func() {
-			_, _ = fmt.Printf(">>> %d", len(msg))
+		logES := func() {
 			_ = gLogger.Write(&logger.Log{
 				Connector:     gLoggerConnector,
 				Configuration: gLoggerConfiguration,
@@ -52,13 +59,15 @@ func Printf(format string, args ...interface{}) {
 				CreatedAt:     time.Now(),
 				Message:       msg,
 			})
-			_, _ = fmt.Printf("<<< %d", len(msg))
+			if gConsoleAfterES {
+				logConsole()
+			}
 		}
 		if gSync {
-			logf()
+			logES()
 			return
 		}
-		go logf()
+		go logES()
 	}
 }
 
