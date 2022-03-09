@@ -44,7 +44,7 @@ func Printf(format string, args ...interface{}) {
 	}
 	if gLogger != nil {
 		logf := func() {
-			_, err := fmt.Printf(">>> %s", msg)
+			_, err := fmt.Printf(">>> %d", len(msg))
 			_ = gLogger.Write(&logger.Log{
 				Connector:     gLoggerConnector,
 				Configuration: gLoggerConfiguration,
@@ -52,7 +52,7 @@ func Printf(format string, args ...interface{}) {
 				CreatedAt:     time.Now(),
 				Message:       msg,
 			})
-			_, err = fmt.Printf("<<< %s", msg)
+			_, err = fmt.Printf("<<< %d", len(msg))
 		}
 		if gSync {
 			logf()
