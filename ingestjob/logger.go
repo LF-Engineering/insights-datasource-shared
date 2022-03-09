@@ -47,8 +47,8 @@ func (s *Logger) Write(log *Log) error {
 	if log.Connector == "" || len(log.Configuration) == 0 || log.CreatedAt.IsZero() {
 		return fmt.Errorf("error: log connector, configuration and created at are all required")
 	}
-	if log.Status != InProgress && log.Status != Failed && log.Status != Done {
-		return fmt.Errorf("error: log status must be one of [%s, %s, %s ]", InProgress, Failed, Done)
+	if log.Status != InProgress && log.Status != Failed && log.Status != Done && log.Status != Internal {
+		return fmt.Errorf("error: log status must be one of [%s, %s, %s, %s]", InProgress, Failed, Done, Internal)
 	}
 
 	docID, err := generateID(log)
@@ -86,8 +86,8 @@ func (s *Logger) Write(log *Log) error {
 
 // Read ...
 func (s *Logger) Read(connector string, status string) ([]Log, error) {
-	if status != InProgress && status != Failed && status != Done {
-		return []Log{}, fmt.Errorf("error: log status must be one of [%s, %s, %s ]", InProgress, Failed, Done)
+	if status != InProgress && status != Failed && status != Done  && status != Internal {
+		return []Log{}, fmt.Errorf("error: log status must be one of [%s, %s, %s, %s]", InProgress, Failed, Done, Internal)
 	}
 
 	must := make([]map[string]interface{}, 0)
@@ -126,8 +126,8 @@ func (s *Logger) Read(connector string, status string) ([]Log, error) {
 }
 
 func (s *Logger) Count(connector string, status string) (int, error) {
-	if status != InProgress && status != Failed && status != Done {
-		return 0, fmt.Errorf("error: log status must be one of [%s, %s, %s ]", InProgress, Failed, Done)
+	if status != InProgress && status != Failed && status != Done && status != Internal {
+		return 0, fmt.Errorf("error: log status must be one of [%s, %s, %s, %s]", InProgress, Failed, Done, Internal)
 	}
 
 	must := make([]map[string]interface{}, 0)
@@ -173,8 +173,8 @@ func (s *Logger) Filter(log *Log) ([]Log, error) {
 	if log.Connector == "" {
 		return []Log{}, fmt.Errorf("error: log connector is required")
 	}
-	if log.Status != InProgress && log.Status != Failed && log.Status != Done {
-		return []Log{}, fmt.Errorf("error: log status must be one of [%s, %s, %s ]", InProgress, Failed, Done)
+	if log.Status != InProgress && log.Status != Failed && log.Status != Done  && log.Status != Internal {
+		return []Log{}, fmt.Errorf("error: log status must be one of [%s, %s, %s, %s]", InProgress, Failed, Done, Internal)
 	}
 
 	must := CreateMustTerms(log)
