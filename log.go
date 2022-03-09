@@ -26,7 +26,7 @@ func AddLogger(logger *logger.Logger, connector, status string, configuration []
 	}
 }
 
-// SetSyncMode
+// SetSyncMode - sets sync/async ES loging mode
 // gSyncMode: true - wait for log message to be sent to ES before exiting (sync mode)
 // gSyncMode: false - default, send log message to ES in goroutine and return immediately
 func SetSyncMode(sync bool) {
@@ -44,7 +44,7 @@ func Printf(format string, args ...interface{}) {
 	}
 	if gLogger != nil {
 		logf := func() {
-			_, err := fmt.Printf(">>> %d", len(msg))
+			_, _ = fmt.Printf(">>> %d", len(msg))
 			_ = gLogger.Write(&logger.Log{
 				Connector:     gLoggerConnector,
 				Configuration: gLoggerConfiguration,
@@ -52,7 +52,7 @@ func Printf(format string, args ...interface{}) {
 				CreatedAt:     time.Now(),
 				Message:       msg,
 			})
-			_, err = fmt.Printf("<<< %d", len(msg))
+			_, _ = fmt.Printf("<<< %d", len(msg))
 		}
 		if gSync {
 			logf()
