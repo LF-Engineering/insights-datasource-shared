@@ -13,6 +13,7 @@ var (
 	gLoggerConnector     string
 	gLoggerStatus        string
 	gLoggerConfiguration []map[string]string
+	gSync                bool
 )
 
 // AddLogger - adds logger
@@ -23,6 +24,13 @@ func AddLogger(logger *logger.Logger, connector, status string, configuration []
 		gLoggerConfiguration = configuration
 		gLoggerStatus = status
 	}
+}
+
+// SetSyncMode
+// gSyncMode: true - wait for log message to be sent to ES before exiting (sync mode)
+// gSyncMode: false - default, send log message to ES in goroutine and return immediately
+func SetSyncMode(sync bool) {
+	gSync = sync
 }
 
 // Printf is a wrapper around Printf(...) that supports logging and removes redacted data.
@@ -36,7 +44,8 @@ func Printf(format string, args ...interface{}) {
 		log.Printf("Err: %s", err.Error())
 	}
 	if gLogger != nil {
-		go func() {
+		logf := func() {
+			_, err := fmt.Printf(">>> %s", msg)
 			_ = gLogger.Write(&logger.Log{
 				Connector:     gLoggerConnector,
 				Configuration: gLoggerConfiguration,
@@ -44,7 +53,13 @@ func Printf(format string, args ...interface{}) {
 				CreatedAt:     time.Now(),
 				Message:       msg,
 			})
-		}()
+			_, err := fmt.Printf("<<< %s", msg)
+		}
+		if gSync {
+			logf()
+			return
+		}
+		go logf()
 	}
 }
 
