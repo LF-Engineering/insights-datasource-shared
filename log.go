@@ -15,6 +15,7 @@ var (
 	gLoggerConfiguration []map[string]string
 	gSync                bool
 	gConsoleAfterES      bool
+	gLogLoggerError      bool
 )
 
 // AddLogger - adds logger
@@ -36,6 +37,11 @@ func SetSyncMode(sync, consoleAfterES bool) {
 	gConsoleAfterES = consoleAfterES
 }
 
+// SetLogLoggerError - if logging to ES/console fails - try to log error
+func SetLogLoggerError(logLoggerError bool) {
+	gLogLoggerError = logLoggerError
+}
+
 // Printf is a wrapper around Printf(...) that supports logging and removes redacted data.
 func Printf(format string, args ...interface{}) {
 	// Actual logging to stdout & DB
@@ -43,7 +49,7 @@ func Printf(format string, args ...interface{}) {
 	msg := FilterRedacted(fmt.Sprintf("%s: "+format, append([]interface{}{ToYMDHMSDate(now)}, args...)...))
 	logConsole := func() {
 		_, err := fmt.Printf("%s", msg)
-		if err != nil {
+		if err != nil && gLogLoggerError {
 			log.Printf("Error (log to console): %s", err.Error())
 		}
 	}
@@ -59,7 +65,7 @@ func Printf(format string, args ...interface{}) {
 				CreatedAt:     time.Now(),
 				Message:       msg,
 			})
-			if err != nil {
+			if err != nil && gLogLoggerError {
 				log.Printf("Error (log to ES): %s", err.Error())
 			}
 			if gConsoleAfterES {
