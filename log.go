@@ -53,7 +53,7 @@ func Printf(format string, args ...interface{}) {
 				CreatedAt:     time.Now(),
 				Message:       msg,
 			})
-			_, err := fmt.Printf("<<< %s", msg)
+			_, err = fmt.Printf("<<< %s", msg)
 		}
 		if gSync {
 			logf()
