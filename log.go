@@ -44,7 +44,7 @@ func Printf(format string, args ...interface{}) {
 	logConsole := func() {
 		_, err := fmt.Printf("%s", msg)
 		if err != nil {
-			log.Printf("Err: %s", err.Error())
+			log.Printf("Error (log to console): %s", err.Error())
 		}
 	}
 	if !gConsoleAfterES || gLogger == nil {
@@ -52,13 +52,16 @@ func Printf(format string, args ...interface{}) {
 	}
 	if gLogger != nil {
 		logES := func() {
-			_ = gLogger.Write(&logger.Log{
+			err := gLogger.Write(&logger.Log{
 				Connector:     gLoggerConnector,
 				Configuration: gLoggerConfiguration,
 				Status:        gLoggerStatus,
 				CreatedAt:     time.Now(),
 				Message:       msg,
 			})
+			if err != nil {
+				log.Printf("Error (log to ES): %s", err.Error())
+			}
 			if gConsoleAfterES {
 				logConsole()
 			}
