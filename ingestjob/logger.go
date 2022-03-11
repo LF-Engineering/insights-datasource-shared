@@ -12,6 +12,7 @@ import (
 
 const (
 	logIndex   = "insights-connector"
+	tasksIndex = "insights-tasks"
 	InProgress = "inprogress"
 	Failed     = "failed"
 	Done       = "done"
@@ -86,7 +87,7 @@ func (s *Logger) Write(log *Log) error {
 
 // Read ...
 func (s *Logger) Read(connector string, status string) ([]Log, error) {
-	if status != InProgress && status != Failed && status != Done  && status != Internal {
+	if status != InProgress && status != Failed && status != Done && status != Internal {
 		return []Log{}, fmt.Errorf("error: log status must be one of [%s, %s, %s, %s]", InProgress, Failed, Done, Internal)
 	}
 
@@ -173,7 +174,7 @@ func (s *Logger) Filter(log *Log) ([]Log, error) {
 	if log.Connector == "" {
 		return []Log{}, fmt.Errorf("error: log connector is required")
 	}
-	if log.Status != InProgress && log.Status != Failed && log.Status != Done  && log.Status != Internal {
+	if log.Status != InProgress && log.Status != Failed && log.Status != Done && log.Status != Internal {
 		return []Log{}, fmt.Errorf("error: log status must be one of [%s, %s, %s, %s]", InProgress, Failed, Done, Internal)
 	}
 
@@ -245,6 +246,54 @@ func CreateMustTerms(log *Log) []map[string]interface{} {
 }
 
 func generateID(log *Log) (string, error) {
+	date := log.CreatedAt.Format(time.RFC3339)
+	configs, err := json.Marshal(log.Configuration)
+	if err != nil {
+		return "", err
+	}
+	docID, err := uuid.Generate(log.Connector, string(configs), date)
+	if err != nil {
+		return "", err
+	}
+	return docID, nil
+}
+
+// WriteTask ...
+func (s *Logger) WriteTask(log *TaskLog) error {
+	if log.Connector == "" || len(log.Configuration) == 0 || log.CreatedAt.IsZero() {
+		return fmt.Errorf("error: log connector, configuration and created at are all required")
+	}
+
+	docID, err := generateTaskID(log)
+	if err != nil {
+		return err
+	}
+
+	b, err := jsoniter.Marshal(log)
+	if err != nil {
+		return err
+	}
+
+	index := fmt.Sprintf("%s-%s-log-%s", tasksIndex, log.Connector, s.environment)
+	query := map[string]interface{}{
+		"query": map[string]interface{}{
+			"term": map[string]interface{}{
+				"_id": map[string]string{
+					"value": docID},
+			},
+		},
+	}
+
+	var res TopHits
+	err = s.esClient.Get(fmt.Sprintf("%s-%s-log-%s", logIndex, log.Connector, s.environment), query, &res)
+	if err != nil || len(res.Hits.Hits) == 0 {
+		_, err := s.esClient.CreateDocument(index, docID, b)
+		return err
+	}
+	return err
+}
+
+func generateTaskID(log *TaskLog) (string, error) {
 	date := log.CreatedAt.Format(time.RFC3339)
 	configs, err := json.Marshal(log.Configuration)
 	if err != nil {
