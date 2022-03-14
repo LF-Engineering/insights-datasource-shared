@@ -134,16 +134,16 @@ resource "aws_ecs_task_definition" "insights-connector-confluence-task" {
   family = "insights-connector-confluence-task"
   requires_compatibilities = ["FARGATE"]
   network_mode = "awsvpc"
-  cpu = "256"
-  memory = "512"
+  cpu = "512"
+  memory = "2048"
   execution_role_arn = aws_iam_role.ecs_task_execution_role.arn
   task_role_arn = aws_iam_role.ecs_task_role.arn
   container_definitions = jsonencode([
     {
       name      = "insights-connector-confluence"
       image     = "${var.eg_account_id}.dkr.ecr.${var.eg_aws_region}.amazonaws.com/insights-connector-confluence:latest"
-      cpu       = 128
-      memory    = 512
+      cpu       = 512
+      memory    = 2048
       essential = true
       logConfiguration: {
         "logDriver": "awslogs",
@@ -437,16 +437,16 @@ resource "aws_ecs_task_definition" "insights-connector-groupsio-task" {
   family = "insights-connector-groupsio-task"
   requires_compatibilities = ["FARGATE"]
   network_mode = "awsvpc"
-  cpu = "256"
-  memory = "1024"
+  cpu = "512"
+  memory = "2048"
   execution_role_arn = aws_iam_role.ecs_task_execution_role.arn
   task_role_arn = aws_iam_role.ecs_task_role.arn
   container_definitions = jsonencode([
     {
       name      = "insights-connector-groupsio"
       image     = "${var.eg_account_id}.dkr.ecr.${var.eg_aws_region}.amazonaws.com/insights-connector-groupsio:latest"
-      cpu       = 256
-      memory    = 1024
+      cpu       = 512
+      memory    = 2048
       essential = true
       logConfiguration: {
         "logDriver": "awslogs",
