@@ -264,32 +264,14 @@ func (s *Logger) WriteTask(log *TaskLog) error {
 		return fmt.Errorf("error: log connector, configuration and created at are all required")
 	}
 
-	docID, err := generateTaskID(log)
-	if err != nil {
-		return err
-	}
-
 	b, err := jsoniter.Marshal(log)
 	if err != nil {
 		return err
 	}
 
-	index := fmt.Sprintf("%s-%s-log-%s", tasksIndex, log.Connector, s.environment)
-	query := map[string]interface{}{
-		"query": map[string]interface{}{
-			"term": map[string]interface{}{
-				"_id": map[string]string{
-					"value": docID},
-			},
-		},
-	}
+	index := fmt.Sprintf("%s-%s", tasksIndex, s.environment)
 
-	var res TopHits
-	err = s.esClient.Get(fmt.Sprintf("%s-%s-log-%s", logIndex, log.Connector, s.environment), query, &res)
-	if err != nil || len(res.Hits.Hits) == 0 {
-		_, err := s.esClient.CreateDocument(index, docID, b)
-		return err
-	}
+	_, err = s.esClient.CreateDocument(index, log.Id, b)
 	return err
 }
 
