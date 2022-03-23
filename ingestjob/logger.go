@@ -274,16 +274,3 @@ func (s *Logger) WriteTask(log *TaskLog) error {
 	_, err = s.esClient.CreateDocument(index, log.Id, b)
 	return err
 }
-
-func generateTaskID(log *TaskLog) (string, error) {
-	date := log.CreatedAt.Format(time.RFC3339)
-	configs, err := json.Marshal(log.Configuration)
-	if err != nil {
-		return "", err
-	}
-	docID, err := uuid.Generate(log.Connector, string(configs), date)
-	if err != nil {
-		return "", err
-	}
-	return docID, nil
-}
