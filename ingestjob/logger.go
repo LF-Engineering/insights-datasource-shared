@@ -270,7 +270,7 @@ func (s *Logger) WriteTask(log *TaskLog) error {
 	}
 
 	index := fmt.Sprintf("%s-%s", tasksIndex, s.environment)
-
-	_, err = s.esClient.CreateDocument(index, log.Id, b)
+	ids := strings.Split(log.Id, "/")
+	_, err = s.esClient.CreateDocument(index, ids[len(ids)-1], b)
 	return err
 }
