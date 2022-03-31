@@ -10,7 +10,7 @@ import (
 
 	"github.com/LF-Engineering/insights-datasource-shared/elastic"
 
-	"github.com/dgrijalva/jwt-go"
+	"github.com/golang-jwt/jwt"
 )
 
 // HTTPClientProvider used in connecting to remote http server
