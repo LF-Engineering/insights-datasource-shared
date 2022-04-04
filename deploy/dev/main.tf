@@ -407,7 +407,7 @@ resource "aws_ecs_task_definition" "insights-connector-pipermail-task" {
   family = "insights-connector-pipermail-task"
   requires_compatibilities = ["FARGATE"]
   network_mode = "awsvpc"
-  cpu = "516"
+  cpu = "512"
   memory = "2048"
   execution_role_arn = aws_iam_role.ecs_task_execution_role.arn
   task_role_arn = aws_iam_role.ecs_task_role.arn
@@ -415,7 +415,7 @@ resource "aws_ecs_task_definition" "insights-connector-pipermail-task" {
     {
       name      = "insights-connector-pipermail"
       image     = "${var.eg_account_id}.dkr.ecr.${var.eg_aws_region}.amazonaws.com/insights-connector-pipermail:latest"
-      cpu       = 516
+      cpu       = 512
       memory    = 2048
       essential = true
       logConfiguration: {
