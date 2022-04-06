@@ -30,20 +30,27 @@ resource "aws_kms_alias" "key-alias" {
 
 resource "aws_s3_bucket" "terraform-state" {
   bucket = "insights-v2-dev"
-  acl    = "private"
 
-  versioning {
-    enabled = true
+  tags = {
+    Name        = "Insights V2 Dev"
+    Environment = "dev"
   }
+}
 
-  server_side_encryption_configuration {
+resource "aws_s3_bucket_acl" "terraform-state-acl" {
+  bucket = aws_s3_bucket.terraform-state.id
+  acl    = "private"
+}
+
+resource "aws_s3_bucket_server_side_encryption_configuration" "terraform-state-encryption-configuration" {
+  bucket = aws_s3_bucket.terraform-state.id
+
     rule {
       apply_server_side_encryption_by_default {
         kms_master_key_id = aws_kms_key.terraform-bucket-key.arn
         sse_algorithm     = "aws:kms"
       }
     }
-  }
 }
 
 resource "aws_s3_bucket_public_access_block" "block" {
@@ -71,15 +78,15 @@ resource "aws_ecs_task_definition" "insights-connector-git-task" {
   requires_compatibilities = ["FARGATE"]
   network_mode = "awsvpc"
   cpu = "256"
-  memory = "512"
+  memory = "1024"
   execution_role_arn = aws_iam_role.ecs_task_execution_role.arn
   task_role_arn = aws_iam_role.ecs_task_role.arn
   container_definitions = jsonencode([
     {
       name      = "insights-connector-git"
       image     = "${var.eg_account_id}.dkr.ecr.${var.eg_aws_region}.amazonaws.com/insights-connector-git:latest"
-      cpu       = 128
-      memory    = 512
+      cpu       = 256
+      memory    = 1024
       essential = true
       logConfiguration: {
         "logDriver": "awslogs",
@@ -130,16 +137,16 @@ resource "aws_ecs_task_definition" "insights-connector-confluence-task" {
   family = "insights-connector-confluence-task"
   requires_compatibilities = ["FARGATE"]
   network_mode = "awsvpc"
-  cpu = "256"
-  memory = "512"
+  cpu = "512"
+  memory = "2048"
   execution_role_arn = aws_iam_role.ecs_task_execution_role.arn
   task_role_arn = aws_iam_role.ecs_task_role.arn
   container_definitions = jsonencode([
     {
       name      = "insights-connector-confluence"
       image     = "${var.eg_account_id}.dkr.ecr.${var.eg_aws_region}.amazonaws.com/insights-connector-confluence:latest"
-      cpu       = 128
-      memory    = 512
+      cpu       = 512
+      memory    = 2048
       essential = true
       logConfiguration: {
         "logDriver": "awslogs",
@@ -224,15 +231,15 @@ resource "aws_ecs_task_definition" "insights-connector-github-task" {
   requires_compatibilities = ["FARGATE"]
   network_mode = "awsvpc"
   cpu = "256"
-  memory = "512"
+  memory = "1024"
   execution_role_arn = aws_iam_role.ecs_task_execution_role.arn
   task_role_arn = aws_iam_role.ecs_task_role.arn
   container_definitions = jsonencode([
     {
       name      = "insights-connector-github"
       image     = "${var.eg_account_id}.dkr.ecr.${var.eg_aws_region}.amazonaws.com/insights-connector-github:latest"
-      cpu       = 128
-      memory    = 512
+      cpu       = 256
+      memory    = 1024
       essential = true
       logConfiguration: {
         "logDriver": "awslogs",
@@ -320,7 +327,7 @@ resource "aws_ecs_task_definition" "insights-connector-jenkins-task" {
   container_definitions = jsonencode([
     {
       name      = "insights-connector-jenkins"
-      image     = "395594542180.dkr.ecr.${var.eg_aws_region}.amazonaws.com/insights-connector-jenkins:latest"
+      image     = "${var.eg_account_id}.dkr.ecr.${var.eg_aws_region}.amazonaws.com/insights-connector-jenkins:latest"
       cpu       = 128
       memory    = 512
       essential = true
@@ -350,7 +357,7 @@ resource "aws_ecs_task_definition" "insights-connector-circleci-task" {
   container_definitions = jsonencode([
     {
       name      = "insights-connector-circleci"
-      image     = "395594542180.dkr.ecr.${var.eg_aws_region}.amazonaws.com/insights-connector-circleci:latest"
+      image     = "${var.eg_account_id}.dkr.ecr.${var.eg_aws_region}.amazonaws.com/insights-connector-circleci:latest"
       cpu       = 128
       memory    = 512
       essential = true
@@ -380,7 +387,7 @@ resource "aws_ecs_task_definition" "insights-connector-rocketchat-task" {
   container_definitions = jsonencode([
     {
       name      = "insights-connector-rocketchat"
-      image     = "395594542180.dkr.ecr.${var.eg_aws_region}.amazonaws.com/insights-connector-rocketchat:latest"
+      image     = "${var.eg_account_id}.dkr.ecr.${var.eg_aws_region}.amazonaws.com/insights-connector-rocketchat:latest"
       cpu       = 128
       memory    = 512
       essential = true
@@ -396,6 +403,95 @@ resource "aws_ecs_task_definition" "insights-connector-rocketchat-task" {
     }
   ])
 
+}
+
+/* ECS pipermail connector task definition */
+resource "aws_ecs_task_definition" "insights-connector-pipermail-task" {
+  family = "insights-connector-pipermail-task"
+  requires_compatibilities = ["FARGATE"]
+  network_mode = "awsvpc"
+  cpu = "512"
+  memory = "2048"
+  execution_role_arn = aws_iam_role.ecs_task_execution_role.arn
+  task_role_arn = aws_iam_role.ecs_task_role.arn
+  container_definitions = jsonencode([
+    {
+      name      = "insights-connector-pipermail"
+      image     = "${var.eg_account_id}.dkr.ecr.${var.eg_aws_region}.amazonaws.com/insights-connector-pipermail:latest"
+      cpu       = 512
+      memory    = 2048
+      essential = true
+      logConfiguration: {
+        "logDriver": "awslogs",
+        "options": {
+          "awslogs-group": "insights-ecs-pipermail",
+          "awslogs-region": "us-east-2",
+          "awslogs-create-group": "true",
+          "awslogs-stream-prefix": "ecs"
+        }
+      }
+    }
+  ])
+
+}
+
+/* ECS groupsio connector task definition */
+resource "aws_ecs_task_definition" "insights-connector-groupsio-task" {
+  family = "insights-connector-groupsio-task"
+  requires_compatibilities = ["FARGATE"]
+  network_mode = "awsvpc"
+  cpu = "512"
+  memory = "2048"
+  execution_role_arn = aws_iam_role.ecs_task_execution_role.arn
+  task_role_arn = aws_iam_role.ecs_task_role.arn
+  container_definitions = jsonencode([
+    {
+      name      = "insights-connector-groupsio"
+      image     = "${var.eg_account_id}.dkr.ecr.${var.eg_aws_region}.amazonaws.com/insights-connector-groupsio:latest"
+      cpu       = 512
+      memory    = 2048
+      essential = true
+      logConfiguration: {
+        "logDriver": "awslogs",
+        "options": {
+          "awslogs-group": "insights-ecs-groupsio",
+          "awslogs-region": "us-east-2",
+          "awslogs-create-group": "true",
+          "awslogs-stream-prefix": "ecs"
+        }
+      }
+    }
+  ])
+
+}
+
+/* ECS googlegroups connector task definition */
+resource "aws_ecs_task_definition" "insights-connector-googlegroups-task" {
+  family = "insights-connector-googlegroups-task"
+  requires_compatibilities = ["FARGATE"]
+  network_mode = "awsvpc"
+  cpu = "256"
+  memory = "512"
+  execution_role_arn = aws_iam_role.ecs_task_execution_role.arn
+  task_role_arn = aws_iam_role.ecs_task_role.arn
+  container_definitions = jsonencode([
+    {
+      name      = "insights-connector-googlegroups"
+      image     = "${var.eg_account_id}.dkr.ecr.${var.eg_aws_region}.amazonaws.com/insights-connector-googlegroups:latest"
+      cpu       = 128
+      memory    = 512
+      essential = true
+      logConfiguration: {
+        "logDriver": "awslogs",
+        "options": {
+          "awslogs-group": "insights-ecs-googlegroups",
+          "awslogs-region": "us-east-2",
+          "awslogs-create-group": "true",
+          "awslogs-stream-prefix": "ecs"
+        }
+      }
+    }
+  ])
 }
 
 resource "aws_security_group" "security_group" {
@@ -680,4 +776,32 @@ resource "aws_iam_role_policy_attachment" "task_role_cloudwatch_policy_attachmen
 resource "aws_iam_role_policy_attachment" "task_execution_role_cloudwatch_policy_attachment" {
   role       = aws_iam_role.ecs_task_execution_role.name
   policy_arn = "arn:aws:iam::aws:policy/CloudWatchLogsFullAccess"
+}
+
+data "aws_iam_policy_document" "kms_use" {
+  statement {
+    sid = ""
+    effect = "Allow"
+    actions = [
+      "kms:Encrypt",
+      "kms:Decrypt",
+      "kms:ReEncrypt*",
+      "kms:GenerateDataKey*",
+      "kms:DescribeKey",
+    ]
+    resources = [
+      "arn:aws:kms:${var.eg_aws_region}:${var.eg_account_id}:key/f36a45d3-9bce-4f10-bedc-5a20c2ff807e"
+    ]
+  }
+}
+
+resource "aws_iam_policy" "kms_use" {
+  name        = "kmsuse"
+  description = "Policy allows using KMS keys"
+  policy      = data.aws_iam_policy_document.kms_use.json
+}
+
+resource "aws_iam_role_policy_attachment" "test-attach" {
+  role       = aws_iam_role.ecs_task_role.name
+  policy_arn = aws_iam_policy.kms_use.arn
 }

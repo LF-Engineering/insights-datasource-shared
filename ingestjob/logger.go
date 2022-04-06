@@ -12,9 +12,11 @@ import (
 
 const (
 	logIndex   = "insights-connector"
+	tasksIndex = "insights-tasks"
 	InProgress = "inprogress"
 	Failed     = "failed"
 	Done       = "done"
+	Internal   = "internal"
 )
 
 // ESLogProvider used in connecting to ES logging server
@@ -46,8 +48,8 @@ func (s *Logger) Write(log *Log) error {
 	if log.Connector == "" || len(log.Configuration) == 0 || log.CreatedAt.IsZero() {
 		return fmt.Errorf("error: log connector, configuration and created at are all required")
 	}
-	if log.Status != InProgress && log.Status != Failed && log.Status != Done {
-		return fmt.Errorf("error: log status must be one of [%s, %s, %s ]", InProgress, Failed, Done)
+	if log.Status != InProgress && log.Status != Failed && log.Status != Done && log.Status != Internal {
+		return fmt.Errorf("error: log status must be one of [%s, %s, %s, %s]", InProgress, Failed, Done, Internal)
 	}
 
 	docID, err := generateID(log)
@@ -85,8 +87,8 @@ func (s *Logger) Write(log *Log) error {
 
 // Read ...
 func (s *Logger) Read(connector string, status string) ([]Log, error) {
-	if status != InProgress && status != Failed && status != Done {
-		return []Log{}, fmt.Errorf("error: log status must be one of [%s, %s, %s ]", InProgress, Failed, Done)
+	if status != InProgress && status != Failed && status != Done && status != Internal {
+		return []Log{}, fmt.Errorf("error: log status must be one of [%s, %s, %s, %s]", InProgress, Failed, Done, Internal)
 	}
 
 	must := make([]map[string]interface{}, 0)
@@ -126,8 +128,8 @@ func (s *Logger) Read(connector string, status string) ([]Log, error) {
 
 // Count ...
 func (s *Logger) Count(connector string, status string) (int, error) {
-	if status != InProgress && status != Failed && status != Done {
-		return 0, fmt.Errorf("error: log status must be one of [%s, %s, %s ]", InProgress, Failed, Done)
+	if status != InProgress && status != Failed && status != Done && status != Internal {
+		return 0, fmt.Errorf("error: log status must be one of [%s, %s, %s, %s]", InProgress, Failed, Done, Internal)
 	}
 
 	must := make([]map[string]interface{}, 0)
@@ -173,8 +175,8 @@ func (s *Logger) Filter(log *Log) ([]Log, error) {
 	if log.Connector == "" {
 		return []Log{}, fmt.Errorf("error: log connector is required")
 	}
-	if log.Status != InProgress && log.Status != Failed && log.Status != Done {
-		return []Log{}, fmt.Errorf("error: log status must be one of [%s, %s, %s ]", InProgress, Failed, Done)
+	if log.Status != InProgress && log.Status != Failed && log.Status != Done && log.Status != Internal {
+		return []Log{}, fmt.Errorf("error: log status must be one of [%s, %s, %s, %s]", InProgress, Failed, Done, Internal)
 	}
 
 	must := createMustTerms(log)
@@ -255,4 +257,21 @@ func generateID(log *Log) (string, error) {
 		return "", err
 	}
 	return docID, nil
+}
+
+// WriteTask ...
+func (s *Logger) WriteTask(log *TaskLog) error {
+	if log.Connector == "" || len(log.Configuration) == 0 || log.CreatedAt.IsZero() {
+		return fmt.Errorf("error: log connector, configuration and created at are all required")
+	}
+
+	b, err := jsoniter.Marshal(log)
+	if err != nil {
+		return err
+	}
+
+	index := fmt.Sprintf("%s-%s", tasksIndex, s.environment)
+	taskIds := strings.Split(log.Id, "/")
+	_, err = s.esClient.CreateDocument(index, taskIds[len(taskIds)-1], b)
+	return err
 }

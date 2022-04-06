@@ -287,7 +287,7 @@ type chanPutResponse struct {
 // DeleteDeliveryStream operation to delete it. If the status is DELETING_FAILED,
 // you can force deletion by invoking DeleteDeliveryStream again but with
 // DeleteDeliveryStreamInput$AllowForceDelete set to true.
-func (c *ClientProvider) DescribeDeliveryStream(channel string)  (*DescribeOutput, error){
+func (c *ClientProvider) DescribeDeliveryStream(channel string) (*DescribeOutput, error) {
 	params := firehose.DescribeDeliveryStreamInput{
 		DeliveryStreamName: &channel,
 	}
@@ -296,7 +296,7 @@ func (c *ClientProvider) DescribeDeliveryStream(channel string)  (*DescribeOutpu
 	if err != nil {
 		return &DescribeOutput{}, err
 	}
-	return &DescribeOutput{StreamStatus: string(res.DeliveryStreamDescription.DeliveryStreamStatus) }, nil
+	return &DescribeOutput{StreamStatus: string(res.DeliveryStreamDescription.DeliveryStreamStatus)}, nil
 }
 
 // DescribeOutput ...
@@ -314,7 +314,7 @@ type DescribeOutput struct {
 // might continue to accept records, but it doesn't make any guarantees with
 // respect to delivering the data. Therefore, as a best practice, first stop any
 // applications that are sending records before you delete a delivery stream.
-func (c *ClientProvider) DeleteDeliveryStream(channel string, force bool)  error{
+func (c *ClientProvider) DeleteDeliveryStream(channel string, force bool) error {
 	params := firehose.DeleteDeliveryStreamInput{
 		DeliveryStreamName: &channel,
 	}
