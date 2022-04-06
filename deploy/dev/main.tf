@@ -12,9 +12,6 @@ terraform {
     encrypt        = true
     kms_key_id     = "alias/terraform-bucket-key"
   }
-  required_providers {
-    aws  = "~> 3.74.1"
-  }
 }
 
 resource "aws_kms_key" "terraform-bucket-key" {
