@@ -559,7 +559,6 @@ resource "aws_ecs_service" "git" {
 
 }
 
-
 resource "aws_ecs_service" "github" {
   name            = "insights-github"
   cluster         = aws_ecs_cluster.insights-ecs-cluster.id
@@ -702,6 +701,48 @@ resource "aws_ecs_service" "jenkins" {
     assign_public_ip = true
   }
 
+}
+
+/* ecs pipermail service */
+resource "aws_ecs_service" "pipermail" {
+  name            = "insights-pipermail"
+  cluster         = aws_ecs_cluster.insights-ecs-cluster.id
+  task_definition = aws_ecs_task_definition.insights-connector-pipermail-task.arn
+  launch_type                        = "FARGATE"
+  scheduling_strategy                = "REPLICA"
+  network_configuration {
+    security_groups = [aws_security_group.security_group.id]
+    subnets = [aws_subnet.main.id]
+    assign_public_ip = true
+  }
+}
+
+/* ecs googlegroups service */
+resource "aws_ecs_service" "googlegroups" {
+  name            = "insights-googlegroups"
+  cluster         = aws_ecs_cluster.insights-ecs-cluster.id
+  task_definition = aws_ecs_task_definition.insights-connector-googlegroups-task.arn
+  launch_type                        = "FARGATE"
+  scheduling_strategy                = "REPLICA"
+  network_configuration {
+    security_groups = [aws_security_group.security_group.id]
+    subnets = [aws_subnet.main.id]
+    assign_public_ip = true
+  }
+}
+
+/* ecs groupsio service */
+resource "aws_ecs_service" "groupsio" {
+  name            = "insights-groupsio"
+  cluster         = aws_ecs_cluster.insights-ecs-cluster.id
+  task_definition = aws_ecs_task_definition.insights-connector-groupsio-task.arn
+  launch_type                        = "FARGATE"
+  scheduling_strategy                = "REPLICA"
+  network_configuration {
+    security_groups = [aws_security_group.security_group.id]
+    subnets = [aws_subnet.main.id]
+    assign_public_ip = true
+  }
 }
 
 /* iam roles */
