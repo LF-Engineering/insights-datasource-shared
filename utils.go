@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"math/rand"
 	"net/http"
+	"net/url"
 	"os"
 	"regexp"
 	"strconv"
@@ -471,4 +472,14 @@ func DedupContributors(inContributors []insights.Contributor) (outContributors [
 		}
 	}
 	return
+}
+
+// StripURL - return only host + path from URL, example: 'https://user:password@github.com/cncf/devstats?foo=bar&foo=baz#readme' -> 'github.com/cncf/devstats'
+func StripURL(urlStr string) string {
+	u, err := url.Parse(urlStr)
+	if err != nil {
+		Printf("StripURL: '%s' is not a correct URL, returning unchanged", urlStr)
+		return urlStr
+	}
+	return u.Host + u.Path
 }
