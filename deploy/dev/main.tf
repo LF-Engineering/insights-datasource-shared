@@ -889,7 +889,7 @@ resource "aws_ecs_service" "insights-scheduler" {
 /* iam roles */
 
 resource "aws_iam_role" "ecs_task_execution_role" {
-  name = "ecs-ta-role"
+  name = "insights-ecs-task-execution-role"
 
   assume_role_policy = <<EOF
 {
@@ -912,7 +912,7 @@ EOF
 }
 
 resource "aws_iam_role" "ecs_task_role" {
-  name = "ecs-tas-role"
+  name = "insights-ecs-task-role"
 
   assume_role_policy = <<EOF
 {
