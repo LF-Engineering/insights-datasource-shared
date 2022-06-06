@@ -545,49 +545,49 @@ resource "aws_ecs_task_definition" "insights-scheduler-task" {
       secrets : [
         {
           name : "SCHEDULER_ES_CACHE_URL",
-          valueFrom : "arn:aws:ssm:eu-west-2:${var.eg_account_id}:parameter/insights/elastic_cache_url"
+          valueFrom : "arn:aws:ssm:${var.eg_aws_region}:${var.eg_account_id}:parameter/insights/elastic_cache_url"
         },
         {
           name : "SCHEDULER_ES_LOG_URL",
-          valueFrom : "arn:aws:ssm:eu-west-2:${var.eg_account_id}:parameter/insights/elastic_log_url"
+          valueFrom : "arn:aws:ssm:${var.eg_aws_region}:${var.eg_account_id}:parameter/insights/elastic_log_url"
         },
         {
           name : "SCHEDULER_CONNECTOR_API",
-          valueFrom : "arn:aws:ssm:eu-west-2:${var.eg_account_id}:parameter/connectors_api_url"
+          valueFrom : "arn:aws:ssm:${var.eg_aws_region}:${var.eg_account_id}:parameter/connectors_api_url"
         },
         {
           name : "SCHEDULER_CONN_STRING",
-          valueFrom : "arn:aws:ssm:eu-west-2:${var.eg_account_id}:parameter/insights/postgresql"
+          valueFrom : "arn:aws:ssm:${var.eg_aws_region}:${var.eg_account_id}:parameter/insights/postgresql"
         },
         {
           name : "SCHEDULER_WEB_HOOK_URL",
-          valueFrom : "arn:aws:ssm:eu-west-2:${var.eg_account_id}:parameter/insights/slackwebhookurl"
+          valueFrom : "arn:aws:ssm:${var.eg_aws_region}:${var.eg_account_id}:parameter/insights/slackwebhookurl"
         },
         {
           name : "SCHEDULER_AUTH_GRANT_TYPE",
-          valueFrom : "arn:aws:ssm:eu-west-2:${var.eg_account_id}:parameter/insights/auth0_grant_type"
+          valueFrom : "arn:aws:ssm:${var.eg_aws_region}:${var.eg_account_id}:parameter/insights/auth0_grant_type"
         },
         {
           name : "SCHEDULER_AUTH_CLIENT_ID",
-          valueFrom : "arn:aws:ssm:eu-west-2:${var.eg_account_id}:parameter/insights/auth0_client_id"
+          valueFrom : "arn:aws:ssm:${var.eg_aws_region}:${var.eg_account_id}:parameter/insights/auth0_client_id"
         },        {
           name : "SCHEDULER_AUTH_CLIENT_SECRET",
-          valueFrom : "arn:aws:ssm:eu-west-2:${var.eg_account_id}:parameter/insights/auth0_client_secret"
+          valueFrom : "arn:aws:ssm:${var.eg_aws_region}:${var.eg_account_id}:parameter/insights/auth0_client_secret"
         },
         {
           name : "SCHEDULER_AUTH_AUDIENCE",
-          valueFrom : "arn:aws:ssm:eu-west-2:${var.eg_account_id}:parameter/insights/auth0_audience"
+          valueFrom : "arn:aws:ssm:${var.eg_aws_region}:${var.eg_account_id}:parameter/insights/auth0_audience"
         },        {
           name : "SCHEDULER_AUTH0_URL",
-          valueFrom : "arn:aws:ssm:eu-west-2:${var.eg_account_id}:parameter/insights/auth0_url"
+          valueFrom : "arn:aws:ssm:${var.eg_aws_region}:${var.eg_account_id}:parameter/insights/auth0_url"
         },
         {
           name : "SCHEDULER_GAP_URL",
-          valueFrom : "arn:aws:ssm:eu-west-2:${var.eg_account_id}:parameter/insights/elastic_gap_url"
+          valueFrom : "arn:aws:ssm:${var.eg_aws_region}:${var.eg_account_id}:parameter/insights/elastic_gap_url"
         },
         {
           name : "SCHEDULER_CIRCLECI_TOKEN",
-          valueFrom : "arn:aws:ssm:eu-west-2:${var.eg_account_id}:parameter/insights/circleci_token"
+          valueFrom : "arn:aws:ssm:${var.eg_aws_region}:${var.eg_account_id}:parameter/insights/circleci_token"
         }
       ],
       logConfiguration: {
