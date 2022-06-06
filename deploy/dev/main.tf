@@ -536,6 +536,12 @@ resource "aws_ecs_task_definition" "insights-scheduler-task" {
       cpu       = 128
       memory    = 512
       essential = true
+      environment: [
+        {
+          "name": "SCHEDULER_ENVIRONMENT",
+          "value": "dev"
+        }
+      ]
       secrets : [
         {
           name : "SCHEDULER_ES_CACHE_URL",
@@ -558,9 +564,6 @@ resource "aws_ecs_task_definition" "insights-scheduler-task" {
           valueFrom : "arn:aws:ssm:eu-west-2:${var.eg_account_id}:parameter/insights/slackwebhookurl"
         },
         {
-          name : "SCHEDULER_ENVIRONMENT",
-          valueFrom : "dev"
-        },        {
           name : "SCHEDULER_AUTH_GRANT_TYPE",
           valueFrom : "arn:aws:ssm:eu-west-2:${var.eg_account_id}:parameter/insights/auth0_grant_type"
         },
