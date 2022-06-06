@@ -916,17 +916,24 @@ resource "aws_iam_role" "ecs_task_role" {
 
   assume_role_policy = <<EOF
 {
- "Version": "2012-10-17",
- "Statement": [
-   {
-     "Action": "sts:AssumeRole",
-     "Principal": {
-       "Service": "ecs-tasks.amazonaws.com"
-     },
-     "Effect": "Allow",
-     "Sid": ""
-   }
- ]
+   "Version":"2012-10-17",
+   "Statement":[
+      {
+         "Action":"sts:AssumeRole",
+         "Principal":{
+            "Service":"ecs-tasks.amazonaws.com"
+         },
+         "Effect":"Allow",
+         "Sid":""
+      },
+      {
+         "Effect":"Allow",
+         "Action":[
+            "ssm:GetParameters"
+         ],
+         "Resource":"arn:aws:ssm:us-east-2:395594542180:parameter/*"
+      }
+   ]
 }
 EOF
 }
