@@ -562,7 +562,7 @@ resource "aws_ecs_task_definition" "insights-scheduler-task" {
           valueFrom : "dev"
         },        {
           name : "SCHEDULER_AUTH_GRANT_TYPE",
-          valueFrom : "arn:aws:ssm:eu-west-2:${var.eg_account_id}:paramete/insights/auth0_grant_type"
+          valueFrom : "arn:aws:ssm:eu-west-2:${var.eg_account_id}:parameter/insights/auth0_grant_type"
         },
         {
           name : "SCHEDULER_AUTH_CLIENT_ID",
