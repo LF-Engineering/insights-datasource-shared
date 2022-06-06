@@ -945,7 +945,7 @@ resource "aws_iam_policy" "ssm_get_parameters_policy" {
         "ssm:GetParameters"
       ],
       "Effect": "Allow",
-      "Resource": "arn:aws:ssm:${var.eg_aws_region}:${var.eg_account_id}:parameter/*"
+      "Resource": "*"
     }
   ]
 }
