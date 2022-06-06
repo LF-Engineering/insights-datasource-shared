@@ -520,6 +520,86 @@ resource "aws_ecs_task_definition" "insights-connector-githubstats-task" {
   ])
 }
 
+/* ECS scheduler connector task definition */
+resource "aws_ecs_task_definition" "insights-scheduler-task" {
+  family = "insights-scheduler-task"
+  requires_compatibilities = ["FARGATE"]
+  network_mode = "awsvpc"
+  cpu = "512"
+  memory = "1024"
+  execution_role_arn = aws_iam_role.ecs_task_execution_role.arn
+  task_role_arn = aws_iam_role.ecs_task_role.arn
+  container_definitions = jsonencode([
+    {
+      name      = "insights-scheduler"
+      image     = "${var.eg_account_id}.dkr.ecr.${var.eg_aws_region}.amazonaws.com/lfx-insights-scheduler:latest"
+      cpu       = 128
+      memory    = 512
+      essential = true
+      secrets : [
+        {
+          name : "SCHEDULER_ES_CACHE_URL",
+          valueFrom : "arn:aws:ssm:eu-west-2:${var.eg_account_id}:parameter/insights/elastic_cache_url"
+        },
+        {
+          name : "SCHEDULER_ES_LOG_URL",
+          valueFrom : "arn:aws:ssm:eu-west-2:${var.eg_account_id}:parameter/insights/elastic_log_url"
+        },
+        {
+          name : "SCHEDULER_CONNECTOR_API",
+          valueFrom : "arn:aws:ssm:eu-west-2:${var.eg_account_id}:parameter/connectors_api_url"
+        },
+        {
+          name : "SCHEDULER_CONN_STRING",
+          valueFrom : "arn:aws:ssm:eu-west-2:${var.eg_account_id}:parameter/insights/postgresql"
+        },
+        {
+          name : "SCHEDULER_WEB_HOOK_URL",
+          valueFrom : "arn:aws:ssm:eu-west-2:${var.eg_account_id}:parameter/insights/slackwebhookurl"
+        },
+        {
+          name : "SCHEDULER_ENVIRONMENT",
+          valueFrom : "dev"
+        },        {
+          name : "SCHEDULER_AUTH_GRANT_TYPE",
+          valueFrom : "arn:aws:ssm:eu-west-2:${var.eg_account_id}:paramete/insights/auth0_grant_type"
+        },
+        {
+          name : "SCHEDULER_AUTH_CLIENT_ID",
+          valueFrom : "arn:aws:ssm:eu-west-2:${var.eg_account_id}:parameter/insights/auth0_client_id"
+        },        {
+          name : "SCHEDULER_AUTH_CLIENT_SECRET",
+          valueFrom : "arn:aws:ssm:eu-west-2:${var.eg_account_id}:parameter/insights/auth0_client_secret"
+        },
+        {
+          name : "SCHEDULER_AUTH_AUDIENCE",
+          valueFrom : "arn:aws:ssm:eu-west-2:${var.eg_account_id}:parameter/insights/auth0_audience"
+        },        {
+          name : "SCHEDULER_AUTH0_URL",
+          valueFrom : "arn:aws:ssm:eu-west-2:${var.eg_account_id}:parameter/insights/auth0_url"
+        },
+        {
+          name : "SCHEDULER_GAP_URL",
+          valueFrom : "arn:aws:ssm:eu-west-2:${var.eg_account_id}:parameter/insights/elastic_gap_url"
+        },
+        {
+          name : "SCHEDULER_CIRCLECI_TOKEN",
+          valueFrom : "arn:aws:ssm:eu-west-2:${var.eg_account_id}:parameter/insights/circleci_token"
+        }
+      ],
+      logConfiguration: {
+        "logDriver": "awslogs",
+        "options": {
+          "awslogs-group": "insights-ecs-scheduler",
+          "awslogs-region": "us-east-2",
+          "awslogs-create-group": "true",
+          "awslogs-stream-prefix": "ecs"
+        }
+      }
+    }
+  ])
+}
+
 resource "aws_security_group" "security_group" {
   name        = "example-task-security-group"
   vpc_id      = aws_vpc.main.id
@@ -779,6 +859,21 @@ resource "aws_ecs_service" "githubstats" {
   name            = "insights-githubstats"
   cluster         = aws_ecs_cluster.insights-ecs-cluster.id
   task_definition = aws_ecs_task_definition.insights-connector-githubstats-task.arn
+  launch_type                        = "FARGATE"
+  scheduling_strategy                = "REPLICA"
+  network_configuration {
+    security_groups = [aws_security_group.security_group.id]
+    subnets = [aws_subnet.main.id]
+    assign_public_ip = true
+  }
+}
+
+/* ecs scheduler service */
+resource "aws_ecs_service" "insights-scheduler" {
+  name            = "insights-scheduler"
+  cluster         = aws_ecs_cluster.insights-ecs-cluster.id
+  task_definition = aws_ecs_task_definition.insights-scheduler-task.arn
+  desired_count = 1
   launch_type                        = "FARGATE"
   scheduling_strategy                = "REPLICA"
   network_configuration {
