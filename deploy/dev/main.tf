@@ -916,29 +916,47 @@ resource "aws_iam_role" "ecs_task_role" {
 
   assume_role_policy = <<EOF
 {
-   "Version":"2012-10-17",
-   "Statement":[
-      {
-         "Action":"sts:AssumeRole",
-         "Principal":{
-            "Service":"ecs-tasks.amazonaws.com"
-         },
-         "Effect":"Allow",
-         "Sid":""
-      },
-      {
-         "Effect":"Allow",
-         "Action":[
-            "ssm:GetParameters"
-         ],
-         "Resource":"arn:aws:ssm:us-east-2:395594542180:parameter/*"
-      }
-   ]
+ "Version": "2012-10-17",
+ "Statement": [
+   {
+     "Action": "sts:AssumeRole",
+     "Principal": {
+       "Service": "ecs-tasks.amazonaws.com"
+     },
+     "Effect": "Allow",
+     "Sid": ""
+   }
+ ]
 }
 EOF
 }
 
 /* policy attachments */
+resource "aws_iam_policy" "ssm_get_parameters_policy" {
+  name        = "ssm-get-parameters"
+  description = "A ssm get params policy"
+
+  policy = <<EOF
+{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Action": [
+        "ssm:GetParameters"
+      ],
+      "Effect": "Allow",
+      "Resource": "arn:aws:ssm:${var.eg_aws_region}:${var.eg_account_id}:parameter/*"
+    }
+  ]
+}
+EOF
+}
+
+resource "aws_iam_role_policy_attachment" "task_role_ssm_get_parameters_policy_attachment" {
+  role       = aws_iam_role.ecs_task_execution_role.name
+  policy_arn = aws_iam_policy.ssm_get_parameters_policy.arn
+}
+
 resource "aws_iam_role_policy_attachment" "ecs-task-execution-role-policy-attachment" {
   role       = aws_iam_role.ecs_task_execution_role.name
   policy_arn = "arn:aws:iam::aws:policy/service-role/AmazonECSTaskExecutionRolePolicy"
