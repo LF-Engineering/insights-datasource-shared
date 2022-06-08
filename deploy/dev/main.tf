@@ -42,12 +42,12 @@ resource "aws_s3_bucket_acl" "terraform-state-acl" {
 resource "aws_s3_bucket_server_side_encryption_configuration" "terraform-state-encryption-configuration" {
   bucket = aws_s3_bucket.terraform-state.id
 
-    rule {
-      apply_server_side_encryption_by_default {
-        kms_master_key_id = aws_kms_key.terraform-bucket-key.arn
-        sse_algorithm     = "aws:kms"
-      }
+  rule {
+    apply_server_side_encryption_by_default {
+      kms_master_key_id = aws_kms_key.terraform-bucket-key.arn
+      sse_algorithm     = "aws:kms"
     }
+  }
 }
 
 resource "aws_s3_bucket_public_access_block" "block" {
@@ -536,55 +536,58 @@ resource "aws_ecs_task_definition" "insights-scheduler-task" {
       cpu       = 128
       memory    = 512
       essential = true
+      environment: [
+        {
+          "name": "SCHEDULER_ENVIRONMENT",
+          "value": "dev"
+        }
+      ]
       secrets : [
         {
           name : "SCHEDULER_ES_CACHE_URL",
-          valueFrom : "arn:aws:ssm:eu-west-2:${var.eg_account_id}:parameter/insights/elastic_cache_url"
+          valueFrom : "arn:aws:ssm:${var.eg_aws_region}:${var.eg_account_id}:parameter/insights/elastic_cache_url"
         },
         {
           name : "SCHEDULER_ES_LOG_URL",
-          valueFrom : "arn:aws:ssm:eu-west-2:${var.eg_account_id}:parameter/insights/elastic_log_url"
+          valueFrom : "arn:aws:ssm:${var.eg_aws_region}:${var.eg_account_id}:parameter/insights/elastic_log_url"
         },
         {
           name : "SCHEDULER_CONNECTOR_API",
-          valueFrom : "arn:aws:ssm:eu-west-2:${var.eg_account_id}:parameter/connectors_api_url"
+          valueFrom : "arn:aws:ssm:${var.eg_aws_region}:${var.eg_account_id}:parameter/connectors_api_url"
         },
         {
           name : "SCHEDULER_CONN_STRING",
-          valueFrom : "arn:aws:ssm:eu-west-2:${var.eg_account_id}:parameter/insights/postgresql"
+          valueFrom : "arn:aws:ssm:${var.eg_aws_region}:${var.eg_account_id}:parameter/insights/postgresql"
         },
         {
           name : "SCHEDULER_WEB_HOOK_URL",
-          valueFrom : "arn:aws:ssm:eu-west-2:${var.eg_account_id}:parameter/insights/slackwebhookurl"
+          valueFrom : "arn:aws:ssm:${var.eg_aws_region}:${var.eg_account_id}:parameter/insights/slackwebhookurl"
         },
         {
-          name : "SCHEDULER_ENVIRONMENT",
-          valueFrom : "dev"
-        },        {
           name : "SCHEDULER_AUTH_GRANT_TYPE",
-          valueFrom : "arn:aws:ssm:eu-west-2:${var.eg_account_id}:parameter/insights/auth0_grant_type"
+          valueFrom : "arn:aws:ssm:${var.eg_aws_region}:${var.eg_account_id}:parameter/insights/auth0_grant_type"
         },
         {
           name : "SCHEDULER_AUTH_CLIENT_ID",
-          valueFrom : "arn:aws:ssm:eu-west-2:${var.eg_account_id}:parameter/insights/auth0_client_id"
+          valueFrom : "arn:aws:ssm:${var.eg_aws_region}:${var.eg_account_id}:parameter/insights/auth0_client_id"
         },        {
           name : "SCHEDULER_AUTH_CLIENT_SECRET",
-          valueFrom : "arn:aws:ssm:eu-west-2:${var.eg_account_id}:parameter/insights/auth0_client_secret"
+          valueFrom : "arn:aws:ssm:${var.eg_aws_region}:${var.eg_account_id}:parameter/insights/auth0_client_secret"
         },
         {
           name : "SCHEDULER_AUTH_AUDIENCE",
-          valueFrom : "arn:aws:ssm:eu-west-2:${var.eg_account_id}:parameter/insights/auth0_audience"
+          valueFrom : "arn:aws:ssm:${var.eg_aws_region}:${var.eg_account_id}:parameter/insights/auth0_audience"
         },        {
           name : "SCHEDULER_AUTH0_URL",
-          valueFrom : "arn:aws:ssm:eu-west-2:${var.eg_account_id}:parameter/insights/auth0_url"
+          valueFrom : "arn:aws:ssm:${var.eg_aws_region}:${var.eg_account_id}:parameter/insights/auth0_url"
         },
         {
           name : "SCHEDULER_GAP_URL",
-          valueFrom : "arn:aws:ssm:eu-west-2:${var.eg_account_id}:parameter/insights/elastic_gap_url"
+          valueFrom : "arn:aws:ssm:${var.eg_aws_region}:${var.eg_account_id}:parameter/insights/elastic_gap_url"
         },
         {
           name : "SCHEDULER_CIRCLECI_TOKEN",
-          valueFrom : "arn:aws:ssm:eu-west-2:${var.eg_account_id}:parameter/insights/circleci_token"
+          valueFrom : "arn:aws:ssm:${var.eg_aws_region}:${var.eg_account_id}:parameter/insights/circleci_token"
         }
       ],
       logConfiguration: {
@@ -886,7 +889,7 @@ resource "aws_ecs_service" "insights-scheduler" {
 /* iam roles */
 
 resource "aws_iam_role" "ecs_task_execution_role" {
-  name = "ecs-ta-role"
+  name = "insights-ecs-task-execution-role"
 
   assume_role_policy = <<EOF
 {
@@ -909,7 +912,7 @@ EOF
 }
 
 resource "aws_iam_role" "ecs_task_role" {
-  name = "ecs-tas-role"
+  name = "insights-ecs-task-role"
 
   assume_role_policy = <<EOF
 {
@@ -929,6 +932,31 @@ EOF
 }
 
 /* policy attachments */
+resource "aws_iam_policy" "ssm_get_parameters_policy" {
+  name        = "ssm-get-parameters"
+  description = "A ssm get params policy"
+
+  policy = <<EOF
+{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Action": [
+        "ssm:GetParameters"
+      ],
+      "Effect": "Allow",
+      "Resource": "*"
+    }
+  ]
+}
+EOF
+}
+
+resource "aws_iam_role_policy_attachment" "task_role_ssm_get_parameters_policy_attachment" {
+  role       = aws_iam_role.ecs_task_execution_role.name
+  policy_arn = aws_iam_policy.ssm_get_parameters_policy.arn
+}
+
 resource "aws_iam_role_policy_attachment" "ecs-task-execution-role-policy-attachment" {
   role       = aws_iam_role.ecs_task_execution_role.name
   policy_arn = "arn:aws:iam::aws:policy/service-role/AmazonECSTaskExecutionRolePolicy"
