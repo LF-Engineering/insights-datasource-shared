@@ -540,6 +540,50 @@ resource "aws_ecs_task_definition" "insights-scheduler-task" {
         {
           "name": "SCHEDULER_ENVIRONMENT",
           "value": "dev"
+        },
+        {
+          "name": "BUGZILLA_DISABLED",
+          "value": true
+        },
+        {
+          "name": "BUGZILLAREST_DISABLED",
+          "value": true
+        },
+        {
+          "name": "DOCKERHUB_DISABLED",
+          "value": true
+        },
+        {
+          "name": "JIRA_DISABLED",
+          "value": true
+        },
+        {
+          "name": "CIRCLECI_DISABLED",
+          "value": true
+        },
+        {
+          "name": "JENKINS_DISABLED",
+          "value": true
+        },
+        {
+          "name": "ROCKETCHAT_DISABLED",
+          "value": true
+        },
+        {
+          "name": "GOOGLEGROUPS_DISABLED",
+          "value": true
+        },
+        {
+          "name": "PIPERMAIL_DISABLED",
+          "value": true
+        },
+        {
+          "name": "GROUPSIO_DISABLED",
+          "value": true
+        },
+        {
+          "name": "CONFLUENCE_DISABLED",
+          "value": true
         }
       ]
       secrets : [
@@ -940,7 +984,7 @@ data "aws_iam_policy_document" "kms_use" {
     ]
     resources = [
       // todo: key must be created before deploy
-      "arn:aws:kms:${var.eg_aws_region}:${var.eg_account_id}:key/f36a45d3-9bce-4f10-bedc-5a20c2ff807e"
+      "arn:aws:kms:${var.eg_aws_region}:${var.eg_account_id}:key/0e300d58-4042-41e7-b6f1-d3bb7b35305f"
     ]
   }
 }
