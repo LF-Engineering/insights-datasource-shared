@@ -6,7 +6,7 @@ provider "aws" {
 
 terraform {
   backend "s3" {
-    bucket         = "insights-v2-dev"
+    bucket         = "insights-v2-prod"
     key            = "terraform/connector-ecs-tasks/terraform.tfstate"
     region         = "us-east-2" # this cant be replaced with the variable
     encrypt        = true
@@ -39,6 +39,17 @@ resource "aws_s3_bucket_acl" "terraform-state-acl" {
   acl    = "private"
 }
 
+resource "aws_s3_bucket_server_side_encryption_configuration" "terraform-state-encryption-configuration" {
+  bucket = aws_s3_bucket.terraform-state.id
+
+  rule {
+    apply_server_side_encryption_by_default {
+      kms_master_key_id = aws_kms_key.terraform-bucket-key.arn
+      sse_algorithm     = "aws:kms"
+    }
+  }
+}
+
 resource "aws_s3_bucket_public_access_block" "block" {
   bucket = aws_s3_bucket.terraform-state.id
 
@@ -64,7 +75,7 @@ resource "aws_ecs_task_definition" "insights-connector-git-task" {
   requires_compatibilities = ["FARGATE"]
   network_mode = "awsvpc"
   cpu = "256"
-  memory = "512"
+  memory = "1024"
   execution_role_arn = aws_iam_role.ecs_task_execution_role.arn
   task_role_arn = aws_iam_role.ecs_task_role.arn
   container_definitions = jsonencode([
@@ -72,12 +83,12 @@ resource "aws_ecs_task_definition" "insights-connector-git-task" {
       name      = "insights-connector-git"
       image     = "${var.eg_account_id}.dkr.ecr.${var.eg_aws_region}.amazonaws.com/insights-connector-git:stable"
       cpu       = 128
-      memory    = 512
+      memory    = 1024
       essential = true
       logConfiguration: {
         "logDriver": "awslogs",
         "options": {
-          "awslogs-group": "insights-ecs-git",
+          "awslogs-group": "insights-ecs-connector-git",
           "awslogs-region": var.eg_aws_region,
           "awslogs-create-group": "true",
           "awslogs-stream-prefix": "ecs"
@@ -107,7 +118,7 @@ resource "aws_ecs_task_definition" "insights-connector-jira-task" {
       logConfiguration: {
         "logDriver": "awslogs",
         "options": {
-          "awslogs-group": "insights-connector-jira-logs",
+          "awslogs-group": "insights-ecs-connector-jira",
           "awslogs-region": var.eg_aws_region,
           "awslogs-create-group": "true",
           "awslogs-stream-prefix": "ecs"
@@ -117,6 +128,37 @@ resource "aws_ecs_task_definition" "insights-connector-jira-task" {
   ])
 
 }
+
+/* ECS confluence connector task definition */
+resource "aws_ecs_task_definition" "insights-connector-confluence-task" {
+  family = "insights-connector-confluence-task"
+  requires_compatibilities = ["FARGATE"]
+  network_mode = "awsvpc"
+  cpu = "512"
+  memory = "2048"
+  execution_role_arn = aws_iam_role.ecs_task_execution_role.arn
+  task_role_arn = aws_iam_role.ecs_task_role.arn
+  container_definitions = jsonencode([
+    {
+      name      = "insights-connector-confluence"
+      image     = "${var.eg_account_id}.dkr.ecr.${var.eg_aws_region}.amazonaws.com/insights-connector-confluence:stable"
+      cpu       = 512
+      memory    = 2048
+      essential = true
+      logConfiguration: {
+        "logDriver": "awslogs",
+        "options": {
+          "awslogs-group": "insights-ecs-connector-confluence",
+          "awslogs-region": var.eg_aws_region,
+          "awslogs-create-group": "true",
+          "awslogs-stream-prefix": "ecs"
+        }
+      }
+    }
+  ])
+
+}
+
 
 /* ECS gerrit connector task definition */
 resource "aws_ecs_task_definition" "insights-connector-gerrit-task" {
@@ -137,7 +179,7 @@ resource "aws_ecs_task_definition" "insights-connector-gerrit-task" {
       logConfiguration: {
         "logDriver": "awslogs",
         "options": {
-          "awslogs-group": "insights-connector-gerrit-task",
+          "awslogs-group": "insights-ecs-connector-gerrit",
           "awslogs-region": var.eg_aws_region,
           "awslogs-create-group": "true",
           "awslogs-stream-prefix": "ecs"
@@ -147,6 +189,7 @@ resource "aws_ecs_task_definition" "insights-connector-gerrit-task" {
   ])
 
 }
+
 
 /* ECS bugzilla connector task definition */
 resource "aws_ecs_task_definition" "insights-connector-bugzilla-task" {
@@ -167,7 +210,38 @@ resource "aws_ecs_task_definition" "insights-connector-bugzilla-task" {
       logConfiguration: {
         "logDriver": "awslogs",
         "options": {
-          "awslogs-group": "insights-connector-bugzilla-task",
+          "awslogs-group": "insights-ecs-connector-bugzilla",
+          "awslogs-region": var.eg_aws_region,
+          "awslogs-create-group": "true",
+          "awslogs-stream-prefix": "ecs"
+        }
+      }
+    }
+  ])
+
+}
+
+
+/* ECS github task definitions */
+resource "aws_ecs_task_definition" "insights-connector-github-task" {
+  family = "insights-connector-github-task"
+  requires_compatibilities = ["FARGATE"]
+  network_mode = "awsvpc"
+  cpu = "256"
+  memory = "1024"
+  execution_role_arn = aws_iam_role.ecs_task_execution_role.arn
+  task_role_arn = aws_iam_role.ecs_task_role.arn
+  container_definitions = jsonencode([
+    {
+      name      = "insights-connector-github"
+      image     = "${var.eg_account_id}.dkr.ecr.${var.eg_aws_region}.amazonaws.com/insights-connector-github:stable"
+      cpu       = 256
+      memory    = 1024
+      essential = true
+      logConfiguration: {
+        "logDriver": "awslogs",
+        "options": {
+          "awslogs-group": "insights-ecs-connector-github",
           "awslogs-region": var.eg_aws_region,
           "awslogs-create-group": "true",
           "awslogs-stream-prefix": "ecs"
@@ -189,7 +263,7 @@ resource "aws_ecs_task_definition" "insights-connector-bugzillarest-task" {
   task_role_arn = aws_iam_role.ecs_task_role.arn
   container_definitions = jsonencode([
     {
-      name      = "insights-connector-bugzillarest"
+      name      = "insights-ecs-connector-bugzillarest"
       image     = "${var.eg_account_id}.dkr.ecr.${var.eg_aws_region}.amazonaws.com/insights-connector-bugzillarest:stable"
       cpu       = 128
       memory    = 512
@@ -198,36 +272,6 @@ resource "aws_ecs_task_definition" "insights-connector-bugzillarest-task" {
         "logDriver": "awslogs",
         "options": {
           "awslogs-group": "insights-connector-bugzillarest-task",
-          "awslogs-region": var.eg_aws_region,
-          "awslogs-create-group": "true",
-          "awslogs-stream-prefix": "ecs"
-        }
-      }
-    }
-  ])
-
-}
-
-/* ECS github task definitions */
-resource "aws_ecs_task_definition" "insights-connector-github-task" {
-  family = "insights-connector-github-task"
-  requires_compatibilities = ["FARGATE"]
-  network_mode = "awsvpc"
-  cpu = "256"
-  memory = "512"
-  execution_role_arn = aws_iam_role.ecs_task_execution_role.arn
-  task_role_arn = aws_iam_role.ecs_task_role.arn
-  container_definitions = jsonencode([
-    {
-      name      = "insights-connector-github"
-      image     = "${var.eg_account_id}.dkr.ecr.${var.eg_aws_region}.amazonaws.com/insights-connector-github:stable"
-      cpu       = 128
-      memory    = 512
-      essential = true
-      logConfiguration: {
-        "logDriver": "awslogs",
-        "options": {
-          "awslogs-group": "insights-connector-github-task",
           "awslogs-region": var.eg_aws_region,
           "awslogs-create-group": "true",
           "awslogs-stream-prefix": "ecs"
@@ -257,7 +301,7 @@ resource "aws_ecs_task_definition" "insights-connector-dockerhub-task" {
       logConfiguration: {
         "logDriver": "awslogs",
         "options": {
-          "awslogs-group": "insights-connector-dockerhub-task",
+          "awslogs-group": "insights-ecs-connector-dockerhub",
           "awslogs-region": var.eg_aws_region,
           "awslogs-create-group": "true",
           "awslogs-stream-prefix": "ecs"
@@ -280,14 +324,14 @@ resource "aws_ecs_task_definition" "insights-connector-jenkins-task" {
   container_definitions = jsonencode([
     {
       name      = "insights-connector-jenkins"
-      image     = "844390194980.dkr.ecr.${var.eg_aws_region}.amazonaws.com/insights-connector-jenkins:stable"
+      image     = "${var.eg_account_id}.dkr.ecr.${var.eg_aws_region}.amazonaws.com/insights-connector-jenkins:stable"
       cpu       = 128
       memory    = 512
       essential = true
       logConfiguration: {
         "logDriver": "awslogs",
         "options": {
-          "awslogs-group": "insights-connector-jenkins-task",
+          "awslogs-group": "insights-ecs-connector-jenkins",
           "awslogs-region": var.eg_aws_region,
           "awslogs-create-group": "true",
           "awslogs-stream-prefix": "ecs"
@@ -310,14 +354,14 @@ resource "aws_ecs_task_definition" "insights-connector-circleci-task" {
   container_definitions = jsonencode([
     {
       name      = "insights-connector-circleci"
-      image     = "844390194980.dkr.ecr.${var.eg_aws_region}.amazonaws.com/insights-connector-circleci:stable"
+      image     = "${var.eg_account_id}.dkr.ecr.${var.eg_aws_region}.amazonaws.com/insights-connector-circleci:stable"
       cpu       = 128
       memory    = 512
       essential = true
       logConfiguration: {
         "logDriver": "awslogs",
         "options": {
-          "awslogs-group": "insights-connector-circleci-task",
+          "awslogs-group": "insights-ecs-connector-circleci",
           "awslogs-region": var.eg_aws_region,
           "awslogs-create-group": "true",
           "awslogs-stream-prefix": "ecs"
@@ -340,14 +384,14 @@ resource "aws_ecs_task_definition" "insights-connector-rocketchat-task" {
   container_definitions = jsonencode([
     {
       name      = "insights-connector-rocketchat"
-      image     = "844390194980.dkr.ecr.${var.eg_aws_region}.amazonaws.com/insights-connector-rocketchat:stable"
+      image     = "${var.eg_account_id}.dkr.ecr.${var.eg_aws_region}.amazonaws.com/insights-connector-rocketchat:stable"
       cpu       = 128
       memory    = 512
       essential = true
       logConfiguration: {
         "logDriver": "awslogs",
         "options": {
-          "awslogs-group": "insights-connector-rocketchat-task",
+          "awslogs-group": "insights-ecs-connector-rocketchat",
           "awslogs-region": var.eg_aws_region,
           "awslogs-create-group": "true",
           "awslogs-stream-prefix": "ecs"
@@ -358,9 +402,69 @@ resource "aws_ecs_task_definition" "insights-connector-rocketchat-task" {
 
 }
 
-/* ECS confluence connector task definition */
-resource "aws_ecs_task_definition" "insights-connector-confluence-task" {
-  family = "insights-connector-confluence-task"
+/* ECS pipermail connector task definition */
+resource "aws_ecs_task_definition" "insights-connector-pipermail-task" {
+  family = "insights-connector-pipermail-task"
+  requires_compatibilities = ["FARGATE"]
+  network_mode = "awsvpc"
+  cpu = "512"
+  memory = "2048"
+  execution_role_arn = aws_iam_role.ecs_task_execution_role.arn
+  task_role_arn = aws_iam_role.ecs_task_role.arn
+  container_definitions = jsonencode([
+    {
+      name      = "insights-connector-pipermail"
+      image     = "${var.eg_account_id}.dkr.ecr.${var.eg_aws_region}.amazonaws.com/insights-connector-pipermail:stable"
+      cpu       = 512
+      memory    = 2048
+      essential = true
+      logConfiguration: {
+        "logDriver": "awslogs",
+        "options": {
+          "awslogs-group": "insights-ecs-connector-pipermail",
+          "awslogs-region": var.eg_aws_region,
+          "awslogs-create-group": "true",
+          "awslogs-stream-prefix": "ecs"
+        }
+      }
+    }
+  ])
+
+}
+
+/* ECS groupsio connector task definition */
+resource "aws_ecs_task_definition" "insights-connector-groupsio-task" {
+  family = "insights-connector-groupsio-task"
+  requires_compatibilities = ["FARGATE"]
+  network_mode = "awsvpc"
+  cpu = "512"
+  memory = "2048"
+  execution_role_arn = aws_iam_role.ecs_task_execution_role.arn
+  task_role_arn = aws_iam_role.ecs_task_role.arn
+  container_definitions = jsonencode([
+    {
+      name      = "insights-connector-groupsio"
+      image     = "${var.eg_account_id}.dkr.ecr.${var.eg_aws_region}.amazonaws.com/insights-connector-groupsio:stable"
+      cpu       = 512
+      memory    = 2048
+      essential = true
+      logConfiguration: {
+        "logDriver": "awslogs",
+        "options": {
+          "awslogs-group": "insights-ecs-connector-groupsio",
+          "awslogs-region": var.eg_aws_region,
+          "awslogs-create-group": "true",
+          "awslogs-stream-prefix": "ecs"
+        }
+      }
+    }
+  ])
+
+}
+
+/* ECS googlegroups connector task definition */
+resource "aws_ecs_task_definition" "insights-connector-googlegroups-task" {
+  family = "insights-connector-googlegroups-task"
   requires_compatibilities = ["FARGATE"]
   network_mode = "awsvpc"
   cpu = "256"
@@ -369,15 +473,15 @@ resource "aws_ecs_task_definition" "insights-connector-confluence-task" {
   task_role_arn = aws_iam_role.ecs_task_role.arn
   container_definitions = jsonencode([
     {
-      name      = "insights-connector-confluence"
-      image     = "844390194980.dkr.ecr.${var.eg_aws_region}.amazonaws.com/insights-connector-confluence:stable"
+      name      = "insights-connector-googlegroups"
+      image     = "${var.eg_account_id}.dkr.ecr.${var.eg_aws_region}.amazonaws.com/insights-connector-googlegroups:stable"
       cpu       = 128
       memory    = 512
       essential = true
       logConfiguration: {
         "logDriver": "awslogs",
         "options": {
-          "awslogs-group": "insights-connector-confluence-task",
+          "awslogs-group": "insights-ecs-connector-googlegroups",
           "awslogs-region": var.eg_aws_region,
           "awslogs-create-group": "true",
           "awslogs-stream-prefix": "ecs"
@@ -385,11 +489,122 @@ resource "aws_ecs_task_definition" "insights-connector-confluence-task" {
       }
     }
   ])
+}
 
+/* ECS githubstats connector task definition */
+resource "aws_ecs_task_definition" "insights-connector-githubstats-task" {
+  family = "insights-connector-githubstats-task"
+  requires_compatibilities = ["FARGATE"]
+  network_mode = "awsvpc"
+  cpu = "256"
+  memory = "512"
+  execution_role_arn = aws_iam_role.ecs_task_execution_role.arn
+  task_role_arn = aws_iam_role.ecs_task_role.arn
+  container_definitions = jsonencode([
+    {
+      name      = "insights-connector-githubstats"
+      image     = "${var.eg_account_id}.dkr.ecr.${var.eg_aws_region}.amazonaws.com/insights-connector-githubstats:stable"
+      cpu       = 128
+      memory    = 512
+      essential = true
+      logConfiguration: {
+        "logDriver": "awslogs",
+        "options": {
+          "awslogs-group": "insights-ecs-connector-githubstats",
+          "awslogs-region": var.eg_aws_region,
+          "awslogs-create-group": "true",
+          "awslogs-stream-prefix": "ecs"
+        }
+      }
+    }
+  ])
+}
+
+/* ECS scheduler connector task definition */
+resource "aws_ecs_task_definition" "insights-scheduler-task" {
+  family = "insights-scheduler-task"
+  requires_compatibilities = ["FARGATE"]
+  network_mode = "awsvpc"
+  cpu = "512"
+  memory = "1024"
+  execution_role_arn = aws_iam_role.ecs_task_execution_role.arn
+  task_role_arn = aws_iam_role.ecs_task_role.arn
+  container_definitions = jsonencode([
+    {
+      name      = "insights-scheduler"
+      image     = "${var.eg_account_id}.dkr.ecr.${var.eg_aws_region}.amazonaws.com/lfx-insights-scheduler:stable"
+      cpu       = 128
+      memory    = 512
+      essential = true
+      environment: [
+        {
+          "name": "SCHEDULER_ENVIRONMENT",
+          "value": "dev"
+        }
+      ]
+      secrets : [
+        {
+          name : "SCHEDULER_ES_CACHE_URL",
+          valueFrom : "arn:aws:ssm:${var.eg_aws_region}:${var.eg_account_id}:parameter/insights/elastic_cache_url"
+        },
+        {
+          name : "SCHEDULER_ES_LOG_URL",
+          valueFrom : "arn:aws:ssm:${var.eg_aws_region}:${var.eg_account_id}:parameter/insights/elastic_log_url"
+        },
+        {
+          name : "SCHEDULER_CONNECTOR_API",
+          valueFrom : "arn:aws:ssm:${var.eg_aws_region}:${var.eg_account_id}:parameter/connectors_api_url"
+        },
+        {
+          name : "SCHEDULER_CONN_STRING",
+          valueFrom : "arn:aws:ssm:${var.eg_aws_region}:${var.eg_account_id}:parameter/insights/postgresql"
+        },
+        {
+          name : "SCHEDULER_WEB_HOOK_URL",
+          valueFrom : "arn:aws:ssm:${var.eg_aws_region}:${var.eg_account_id}:parameter/insights/slackwebhookurl"
+        },
+        {
+          name : "SCHEDULER_AUTH_GRANT_TYPE",
+          valueFrom : "arn:aws:ssm:${var.eg_aws_region}:${var.eg_account_id}:parameter/insights/auth0_grant_type"
+        },
+        {
+          name : "SCHEDULER_AUTH_CLIENT_ID",
+          valueFrom : "arn:aws:ssm:${var.eg_aws_region}:${var.eg_account_id}:parameter/insights/auth0_client_id"
+        },        {
+          name : "SCHEDULER_AUTH_CLIENT_SECRET",
+          valueFrom : "arn:aws:ssm:${var.eg_aws_region}:${var.eg_account_id}:parameter/insights/auth0_client_secret"
+        },
+        {
+          name : "SCHEDULER_AUTH_AUDIENCE",
+          valueFrom : "arn:aws:ssm:${var.eg_aws_region}:${var.eg_account_id}:parameter/insights/auth0_audience"
+        },        {
+          name : "SCHEDULER_AUTH0_URL",
+          valueFrom : "arn:aws:ssm:${var.eg_aws_region}:${var.eg_account_id}:parameter/insights/auth0_url"
+        },
+        {
+          name : "SCHEDULER_GAP_URL",
+          valueFrom : "arn:aws:ssm:${var.eg_aws_region}:${var.eg_account_id}:parameter/insights/elastic_gap_url"
+        },
+        {
+          name : "SCHEDULER_CIRCLECI_TOKEN",
+          valueFrom : "arn:aws:ssm:${var.eg_aws_region}:${var.eg_account_id}:parameter/insights/circleci_token"
+        }
+      ],
+      logConfiguration: {
+        "logDriver": "awslogs",
+        "options": {
+          "awslogs-group": "insights-ecs-scheduler",
+          "awslogs-region": var.eg_aws_region,
+          "awslogs-create-group": "true",
+          "awslogs-stream-prefix": "ecs"
+        }
+      }
+    }
+  ])
 }
 
 resource "aws_security_group" "security_group" {
-  name        = "example-task-security-group"
+  name        = "insights-ecs-task-security-group"
   vpc_id      = aws_vpc.main.id
 
   ingress {
@@ -454,6 +669,21 @@ resource "aws_ecs_service" "git" {
     assign_public_ip = true
   }
 
+}
+
+/* ecs scheduler service */
+resource "aws_ecs_service" "insights-scheduler" {
+  name            = "insights-scheduler"
+  cluster         = aws_ecs_cluster.insights-ecs-cluster.id
+  task_definition = aws_ecs_task_definition.insights-scheduler-task.arn
+  desired_count = 1
+  launch_type                        = "FARGATE"
+  scheduling_strategy                = "REPLICA"
+  network_configuration {
+    security_groups = [aws_security_group.security_group.id]
+    subnets = [aws_subnet.main.id]
+    assign_public_ip = true
+  }
 }
 
 /* ecs bugzilla service */
@@ -604,7 +834,7 @@ resource "aws_ecs_service" "jenkins" {
 /* iam roles */
 
 resource "aws_iam_role" "ecs_task_execution_role" {
-  name = "ecs-ta-role"
+  name = "insights-ecs-task-execution-role"
 
   assume_role_policy = <<EOF
 {
@@ -627,7 +857,7 @@ EOF
 }
 
 resource "aws_iam_role" "ecs_task_role" {
-  name = "ecs-tas-role"
+  name = "insights-ecs-task-role"
 
   assume_role_policy = <<EOF
 {
@@ -647,6 +877,31 @@ EOF
 }
 
 /* policy attachments */
+resource "aws_iam_policy" "ssm_get_parameters_policy" {
+  name        = "ssm-get-parameters"
+  description = "A ssm get params policy"
+
+  policy = <<EOF
+{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Action": [
+        "ssm:GetParameters"
+      ],
+      "Effect": "Allow",
+      "Resource": "*"
+    }
+  ]
+}
+EOF
+}
+
+resource "aws_iam_role_policy_attachment" "task_role_ssm_get_parameters_policy_attachment" {
+  role       = aws_iam_role.ecs_task_execution_role.name
+  policy_arn = aws_iam_policy.ssm_get_parameters_policy.arn
+}
+
 resource "aws_iam_role_policy_attachment" "ecs-task-execution-role-policy-attachment" {
   role       = aws_iam_role.ecs_task_execution_role.name
   policy_arn = "arn:aws:iam::aws:policy/service-role/AmazonECSTaskExecutionRolePolicy"
@@ -657,6 +912,11 @@ resource "aws_iam_role_policy_attachment" "task_role_s3_policy_attachment" {
   policy_arn = "arn:aws:iam::aws:policy/AmazonS3FullAccess"
 }
 
+resource "aws_iam_role_policy_attachment" "task_role_ssm_policy_attachment" {
+  role       = aws_iam_role.ecs_task_role.name
+  policy_arn = "arn:aws:iam::aws:policy/AmazonSSMReadOnlyAccess"
+}
+
 resource "aws_iam_role_policy_attachment" "task_role_cloudwatch_policy_attachment" {
   role       = aws_iam_role.ecs_task_role.name
   policy_arn = "arn:aws:iam::aws:policy/CloudWatchLogsFullAccess"
@@ -665,4 +925,33 @@ resource "aws_iam_role_policy_attachment" "task_role_cloudwatch_policy_attachmen
 resource "aws_iam_role_policy_attachment" "task_execution_role_cloudwatch_policy_attachment" {
   role       = aws_iam_role.ecs_task_execution_role.name
   policy_arn = "arn:aws:iam::aws:policy/CloudWatchLogsFullAccess"
+}
+
+data "aws_iam_policy_document" "kms_use" {
+  statement {
+    sid = ""
+    effect = "Allow"
+    actions = [
+      "kms:Encrypt",
+      "kms:Decrypt",
+      "kms:ReEncrypt*",
+      "kms:GenerateDataKey*",
+      "kms:DescribeKey",
+    ]
+    resources = [
+      // todo: key must be created before deploy
+      "arn:aws:kms:${var.eg_aws_region}:${var.eg_account_id}:key/f36a45d3-9bce-4f10-bedc-5a20c2ff807e"
+    ]
+  }
+}
+
+resource "aws_iam_policy" "kms_use" {
+  name        = "kmsuse"
+  description = "Policy allows using KMS keys"
+  policy      = data.aws_iam_policy_document.kms_use.json
+}
+
+resource "aws_iam_role_policy_attachment" "test-attach" {
+  role       = aws_iam_role.ecs_task_role.name
+  policy_arn = aws_iam_policy.kms_use.arn
 }
