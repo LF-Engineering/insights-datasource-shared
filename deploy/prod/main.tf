@@ -983,7 +983,6 @@ data "aws_iam_policy_document" "kms_use" {
       "kms:DescribeKey",
     ]
     resources = [
-      // todo: key must be created before deploy
       "arn:aws:kms:${var.eg_aws_region}:${var.eg_account_id}:key/0e300d58-4042-41e7-b6f1-d3bb7b35305f"
     ]
   }
