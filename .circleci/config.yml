@@ -2,10 +2,10 @@ version: 2.1
 references:
 
 base_image: &base_image
-              hashicorp/terraform:1.1.4
+  hashicorp/terraform:1.1.4
 
 working_directory: &working_directory
-                     /go/src/github.com/LF-Engineering/terraform-script
+  /go/src/github.com/LF-Engineering/terraform-script
 
 default_config: &default_config
   docker:
