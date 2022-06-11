@@ -12,7 +12,7 @@ import (
 const (
 	Path         = "cache/%s/%s/%s"
 	LastSyncFile = "0000-last-sync"
-	Bucket       = "insights-v2-%s"
+	Bucket       = "insights-v2-cache-%s"
 	Region       = "us-east-2"
 )
 
