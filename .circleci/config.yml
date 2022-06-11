@@ -114,7 +114,7 @@ workflows:
             - development
           filters:
             branches:
-              only: main
+              only: update-terraform-config #main
           requires:
             - validate_dev
       - validate_prod:
