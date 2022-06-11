@@ -26,7 +26,7 @@ resource "aws_kms_alias" "key-alias" {
 }
 
 resource "aws_s3_bucket" "terraform-state" {
-  bucket = "insights-v2-dev"
+  bucket = "insights-v2-raw-dev"
 
   tags = {
     Name        = "Insights V2 Dev"

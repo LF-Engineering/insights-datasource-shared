@@ -2,10 +2,10 @@ version: 2.1
 references:
 
 base_image: &base_image
-  hashicorp/terraform:1.1.4
+              hashicorp/terraform:1.1.4
 
 working_directory: &working_directory
-  /go/src/github.com/LF-Engineering/terraform-script
+                     /go/src/github.com/LF-Engineering/terraform-script
 
 default_config: &default_config
   docker:
@@ -86,17 +86,6 @@ jobs:
       - *terraform_plan
       - *terraform_apply
 
-  deploy_test:
-    <<: *default_config
-    steps:
-      - checkout
-      - *set_terraform_environment_test
-      - *terraform_init
-      - attach_workspace:
-          at: *working_directory
-      - *terraform_plan
-      - *terraform_apply
-
   deploy_dev:
     <<: *default_config
     steps:
@@ -126,15 +115,6 @@ jobs:
       - *terraform_init
       - *terraform_validate
 
-  validate_test:
-    <<: *default_config
-    steps:
-      - checkout
-      - setup_remote_docker
-      - *set_terraform_environment_test
-      - *terraform_init
-      - *terraform_validate
-
 workflows:
   build-ecs:
     jobs:
@@ -147,22 +127,6 @@ workflows:
               only: main
           requires:
             - validate_dev
-      - validate_test:
-          filters:
-            branches:
-              ignore: /.*/
-            tags:
-              only: /^v\d+(\.\d+)?(\.\d+)?$/
-      - deploy_test:
-          context:
-            - test
-          filters:
-            branches:
-              ignore: /.*/
-            tags:
-              only: /^v\d+(\.\d+)?(\.\d+)?$/
-          requires:
-            - validate_test
       - validate_prod:
           filters:
             branches:
