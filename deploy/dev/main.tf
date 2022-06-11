@@ -6,7 +6,7 @@ provider "aws" {
 
 terraform {
   backend "s3" {
-    bucket         = "insights-v2-dev"
+    bucket         = "insights-v2-raw-dev"
     key            = "terraform/connector-ecs-tasks/terraform.tfstate"
     region         = "us-east-2" # this cant be replaced with the variable
     encrypt        = true

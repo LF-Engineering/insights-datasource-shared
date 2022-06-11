@@ -24,16 +24,6 @@ set_terraform_environment_dev: &set_terraform_environment_dev
       echo 'export AWS_DEFAULT_REGION=$AWS_REGION_DEV' >> $BASH_ENV
       echo 'export STAGE=dev' >> $BASH_ENV
 
-set_terraform_environment_test: &set_terraform_environment_test
-  run:
-    name: set terraform environment test
-    command: |
-      cd && touch $BASH_ENV
-      echo 'export AWS_ACCESS_KEY_ID=$AWS_ACCESS_KEY_ID_TEST' >> $BASH_ENV
-      echo 'export AWS_SECRET_ACCESS_KEY=$AWS_SECRET_ACCESS_KEY_TEST' >> $BASH_ENV
-      echo 'export AWS_DEFAULT_REGION=$AWS_REGION_TEST' >> $BASH_ENV
-      echo 'export STAGE=test' >> $BASH_ENV
-
 set_terraform_environment_prod: &set_terraform_environment_prod
   run:
     name: set terraform environment prod
