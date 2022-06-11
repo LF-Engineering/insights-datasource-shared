@@ -6,7 +6,7 @@ provider "aws" {
 
 terraform {
   backend "s3" {
-    bucket         = "insights-v2-prod"
+    bucket         = "insights-v2-cache-prod"
     key            = "terraform/connector-ecs-tasks/terraform.tfstate"
     region         = "us-east-2" # this cant be replaced with the variable
     encrypt        = true
@@ -26,10 +26,10 @@ resource "aws_kms_alias" "key-alias" {
 }
 
 resource "aws_s3_bucket" "terraform-state" {
-  bucket = "insights-v2-prod"
+  bucket = "insights-v2-cache-prod"
 
   tags = {
-    Name        = "Insights V2 Prod"
+    Name        = "Insights V2 cache Prod"
     Environment = "prod"
   }
 }
