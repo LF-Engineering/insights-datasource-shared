@@ -25,13 +25,12 @@ resource "aws_kms_alias" "key-alias" {
   target_key_id = aws_kms_key.terraform-bucket-key.key_id
 }
 
-resource "aws_s3_bucket" "terraform-state" {
+data "aws_s3_bucket" "selected" {
   bucket = "insights-v2-cache-dev"
+}
 
-  tags = {
-    Name        = "Insights V2 cache Dev"
-    Environment = "dev"
-  }
+resource "aws_s3_bucket" "terraform-state" {
+  bucket = data.aws_s3_bucket.selected.id
 }
 
 resource "aws_s3_bucket_acl" "terraform-state-acl" {
