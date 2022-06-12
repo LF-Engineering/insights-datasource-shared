@@ -693,3 +693,18 @@ resource "aws_route_table_association" "public" {
   subnet_id      = aws_subnet.main.id
   route_table_id = aws_default_route_table.public.id
 }
+
+/* ecs scheduler service */
+resource "aws_ecs_service" "insights-scheduler" {
+  name            = "insights-scheduler"
+  cluster         = aws_ecs_cluster.insights-ecs-cluster.id
+  task_definition = aws_ecs_task_definition.insights-scheduler-task.arn
+  desired_count = 1
+  launch_type                        = "FARGATE"
+  scheduling_strategy                = "REPLICA"
+  network_configuration {
+    security_groups = [aws_security_group.security_group.id]
+    subnets = [aws_subnet.main.id]
+    assign_public_ip = true
+  }
+}
