@@ -49,6 +49,7 @@ terraform_validate: &terraform_validate
     command: |
       source $BASH_ENV
       cd deploy/${STAGE} && terraform validate
+      TF_VAR_aws_access_key=$AWS_ACCESS_KEY_ID TF_VAR_aws_secret_key=$AWS_SECRET_ACCESS_KEY TF_VAR_eg_aws_region=$AWS_DEFAULT_REGION TF_VAR_eg_account_id=$AWS_ACCOUNT_ID terraform import aws_iam_policy.kms_use arn:aws:iam::395594542180:policy/kmsuse
 
 terraform_plan: &terraform_plan
   run:
