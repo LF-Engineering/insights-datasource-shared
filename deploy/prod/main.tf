@@ -128,7 +128,7 @@ resource "aws_ecs_task_definition" "insights-connector-git-task" {
       logConfiguration : {
         "logDriver" : "awslogs",
         "options" : {
-          "awslogs-group" : "insights-ecs-git",
+          "awslogs-group" : "insights-ecs-connector-git",
           "awslogs-region" : var.eg_aws_region,
           "awslogs-create-group" : "true",
           "awslogs-stream-prefix" : "ecs"
@@ -158,7 +158,7 @@ resource "aws_ecs_task_definition" "insights-connector-jira-task" {
       logConfiguration : {
         "logDriver" : "awslogs",
         "options" : {
-          "awslogs-group" : "insights-connector-jira-logs",
+          "awslogs-group" : "insights-ecs-connector-jira",
           "awslogs-region" : var.eg_aws_region,
           "awslogs-create-group" : "true",
           "awslogs-stream-prefix" : "ecs"
@@ -188,7 +188,7 @@ resource "aws_ecs_task_definition" "insights-connector-confluence-task" {
       logConfiguration : {
         "logDriver" : "awslogs",
         "options" : {
-          "awslogs-group" : "insights-ecs-confluence",
+          "awslogs-group" : "insights-ecs-connector-confluence",
           "awslogs-region" : "us-east-2",
           "awslogs-create-group" : "true",
           "awslogs-stream-prefix" : "ecs"
@@ -218,7 +218,7 @@ resource "aws_ecs_task_definition" "insights-connector-gerrit-task" {
       logConfiguration : {
         "logDriver" : "awslogs",
         "options" : {
-          "awslogs-group" : "insights-connector-gerrit-task",
+          "awslogs-group" : "insights-ecs-connector-gerrit",
           "awslogs-region" : var.eg_aws_region,
           "awslogs-create-group" : "true",
           "awslogs-stream-prefix" : "ecs"
@@ -248,7 +248,7 @@ resource "aws_ecs_task_definition" "insights-connector-bugzilla-task" {
       logConfiguration : {
         "logDriver" : "awslogs",
         "options" : {
-          "awslogs-group" : "insights-ecs-bugzilla",
+          "awslogs-group" : "insights-ecs-connector-bugzilla",
           "awslogs-region" : "us-east-2",
           "awslogs-create-group" : "true",
           "awslogs-stream-prefix" : "ecs"
@@ -278,7 +278,7 @@ resource "aws_ecs_task_definition" "insights-connector-github-task" {
       logConfiguration : {
         "logDriver" : "awslogs",
         "options" : {
-          "awslogs-group" : "insights-connector-github-task",
+          "awslogs-group" : "insights-ecs-connector-github",
           "awslogs-region" : var.eg_aws_region,
           "awslogs-create-group" : "true",
           "awslogs-stream-prefix" : "ecs"
@@ -308,7 +308,7 @@ resource "aws_ecs_task_definition" "insights-connector-bugzillarest-task" {
       logConfiguration : {
         "logDriver" : "awslogs",
         "options" : {
-          "awslogs-group" : "insights-ecs-bugzillarest",
+          "awslogs-group" : "insights-ecs-connector-bugzillarest",
           "awslogs-region" : "us-east-2",
           "awslogs-create-group" : "true",
           "awslogs-stream-prefix" : "ecs"
@@ -338,7 +338,7 @@ resource "aws_ecs_task_definition" "insights-connector-dockerhub-task" {
       logConfiguration : {
         "logDriver" : "awslogs",
         "options" : {
-          "awslogs-group" : "insights-ecs-dockerhub",
+          "awslogs-group" : "insights-ecs-connector-dockerhub",
           "awslogs-region" : "us-east-2",
           "awslogs-create-group" : "true",
           "awslogs-stream-prefix" : "ecs"
@@ -368,7 +368,7 @@ resource "aws_ecs_task_definition" "insights-connector-jenkins-task" {
       logConfiguration : {
         "logDriver" : "awslogs",
         "options" : {
-          "awslogs-group" : "insights-ecs-jenkins",
+          "awslogs-group" : "insights-ecs-connector-jenkins",
           "awslogs-region" : "us-east-2",
           "awslogs-create-group" : "true",
           "awslogs-stream-prefix" : "ecs"
@@ -398,7 +398,7 @@ resource "aws_ecs_task_definition" "insights-connector-circleci-task" {
       logConfiguration : {
         "logDriver" : "awslogs",
         "options" : {
-          "awslogs-group" : "insights-ecs-circleci",
+          "awslogs-group" : "insights-ecs-connector-circleci",
           "awslogs-region" : "us-east-2",
           "awslogs-create-group" : "true",
           "awslogs-stream-prefix" : "ecs"
@@ -428,7 +428,7 @@ resource "aws_ecs_task_definition" "insights-connector-rocketchat-task" {
       logConfiguration : {
         "logDriver" : "awslogs",
         "options" : {
-          "awslogs-group" : "insights-ecs-rocketchat",
+          "awslogs-group" : "insights-ecs-connector-rocketchat",
           "awslogs-region" : "us-east-2",
           "awslogs-create-group" : "true",
           "awslogs-stream-prefix" : "ecs"
@@ -458,7 +458,7 @@ resource "aws_ecs_task_definition" "insights-connector-pipermail-task" {
       logConfiguration : {
         "logDriver" : "awslogs",
         "options" : {
-          "awslogs-group" : "insights-ecs-pipermail",
+          "awslogs-group" : "insights-ecs-connector-pipermail",
           "awslogs-region" : "us-east-2",
           "awslogs-create-group" : "true",
           "awslogs-stream-prefix" : "ecs"
@@ -488,7 +488,7 @@ resource "aws_ecs_task_definition" "insights-connector-groupsio-task" {
       logConfiguration : {
         "logDriver" : "awslogs",
         "options" : {
-          "awslogs-group" : "insights-ecs-groupsio",
+          "awslogs-group" : "insights-ecs-connector-groupsio",
           "awslogs-region" : "us-east-2",
           "awslogs-create-group" : "true",
           "awslogs-stream-prefix" : "ecs"
@@ -518,7 +518,7 @@ resource "aws_ecs_task_definition" "insights-connector-googlegroups-task" {
       logConfiguration : {
         "logDriver" : "awslogs",
         "options" : {
-          "awslogs-group" : "insights-ecs-googlegroups",
+          "awslogs-group" : "insights-ecs-connector-googlegroups",
           "awslogs-region" : "us-east-2",
           "awslogs-create-group" : "true",
           "awslogs-stream-prefix" : "ecs"
@@ -547,7 +547,7 @@ resource "aws_ecs_task_definition" "insights-connector-githubstats-task" {
       logConfiguration : {
         "logDriver" : "awslogs",
         "options" : {
-          "awslogs-group" : "insights-ecs-githubstats",
+          "awslogs-group" : "insights-ecs-connector-githubstats",
           "awslogs-region" : "us-east-2",
           "awslogs-create-group" : "true",
           "awslogs-stream-prefix" : "ecs"
@@ -674,7 +674,7 @@ resource "aws_ecs_task_definition" "insights-scheduler-task" {
       logConfiguration : {
         "logDriver" : "awslogs",
         "options" : {
-          "awslogs-group" : "insights-ecs-scheduler",
+          "awslogs-group" : "insights-ecs-connector-scheduler",
           "awslogs-region" : "us-east-2",
           "awslogs-create-group" : "true",
           "awslogs-stream-prefix" : "ecs"
