@@ -49,6 +49,8 @@ terraform_validate: &terraform_validate
     command: |
       source $BASH_ENV
       cd deploy/${STAGE} && terraform validate
+      terraform import aws_vpc.main vpc-0b8b27954332338d2
+      terraform import aws_security_group.security_group sg-0275ecdb1314f8443
 
 terraform_plan: &terraform_plan
   run:
