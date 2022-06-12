@@ -2,7 +2,7 @@ version: 2.1
 references:
 
 base_image: &base_image
-  hashicorp/terraform:1.1.4
+  hashicorp/terraform:1.2.2
 
 working_directory: &working_directory
   /go/src/github.com/LF-Engineering/terraform-script
@@ -114,7 +114,7 @@ workflows:
             - development
           filters:
             branches:
-              only: main
+              only: update-terraform-configs #main
           requires:
             - validate_dev
       - validate_prod:
