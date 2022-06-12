@@ -709,47 +709,53 @@ resource "aws_ecs_service" "insights-scheduler" {
   }
 }
 
-/* iam roles */
+/* policy attachments */
+resource "aws_iam_policy" "ssm_get_parameters_policy" {
+  name        = "ssm-get-parameters"
+  description = "A ssm get params policy"
 
-resource "aws_iam_role" "ecs_task_execution_role" {
-  name = "insights-ecs-task-execution-role"
-
-  assume_role_policy = <<EOF
+  policy = <<EOF
 {
- "Version": "2012-10-17",
- "Statement": [
-   {
-     "Action": "sts:AssumeRole",
-     "Principal": {
-       "Service": [
-          "ecs-tasks.amazonaws.com",
-          "cloudwatch.amazonaws.com"
-        ]
-     },
-     "Effect": "Allow",
-     "Sid": ""
-   }
- ]
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Action": [
+        "ssm:GetParameters"
+      ],
+      "Effect": "Allow",
+      "Resource": "*"
+    }
+  ]
 }
 EOF
 }
 
-resource "aws_iam_role" "ecs_task_role" {
-  name = "insights-ecs-task-role"
-
-  assume_role_policy = <<EOF
-{
- "Version": "2012-10-17",
- "Statement": [
-   {
-     "Action": "sts:AssumeRole",
-     "Principal": {
-       "Service": "ecs-tasks.amazonaws.com"
-     },
-     "Effect": "Allow",
-     "Sid": ""
-   }
- ]
+resource "aws_iam_role_policy_attachment" "task_role_ssm_get_parameters_policy_attachment" {
+  role       = aws_iam_role.ecs_task_execution_role.name
+  policy_arn = aws_iam_policy.ssm_get_parameters_policy.arn
 }
-EOF
+
+resource "aws_iam_role_policy_attachment" "ecs-task-execution-role-policy-attachment" {
+  role       = aws_iam_role.ecs_task_execution_role.name
+  policy_arn = "arn:aws:iam::aws:policy/service-role/AmazonECSTaskExecutionRolePolicy"
+}
+
+resource "aws_iam_role_policy_attachment" "task_role_s3_policy_attachment" {
+  role       = aws_iam_role.ecs_task_role.name
+  policy_arn = "arn:aws:iam::aws:policy/AmazonS3FullAccess"
+}
+
+resource "aws_iam_role_policy_attachment" "task_role_ssm_policy_attachment" {
+  role       = aws_iam_role.ecs_task_role.name
+  policy_arn = "arn:aws:iam::aws:policy/AmazonSSMReadOnlyAccess"
+}
+
+resource "aws_iam_role_policy_attachment" "task_role_cloudwatch_policy_attachment" {
+  role       = aws_iam_role.ecs_task_role.name
+  policy_arn = "arn:aws:iam::aws:policy/CloudWatchLogsFullAccess"
+}
+
+resource "aws_iam_role_policy_attachment" "task_execution_role_cloudwatch_policy_attachment" {
+  role       = aws_iam_role.ecs_task_execution_role.name
+  policy_arn = "arn:aws:iam::aws:policy/CloudWatchLogsFullAccess"
 }
