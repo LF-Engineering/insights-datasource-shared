@@ -39,8 +39,6 @@ terraform_init: &terraform_init
     name: terraform init
     command: |
       source $BASH_ENV
-      pwd
-      ls
       cd deploy/${STAGE} && terraform init -backend-config="access_key=${AWS_ACCESS_KEY_ID}" -backend-config="secret_key=${AWS_SECRET_ACCESS_KEY}"
 
 terraform_validate: &terraform_validate
@@ -114,7 +112,7 @@ workflows:
             - development
           filters:
             branches:
-              only: update-terraform-configs #main
+              only: main
           requires:
             - validate_dev
       - validate_prod:
