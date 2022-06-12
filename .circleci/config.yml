@@ -2,7 +2,7 @@ version: 2.1
 references:
 
 base_image: &base_image
-  hashicorp/terraform:1.1.4
+  hashicorp/terraform:1.2.2
 
 working_directory: &working_directory
   /go/src/github.com/LF-Engineering/terraform-script
@@ -39,8 +39,6 @@ terraform_init: &terraform_init
     name: terraform init
     command: |
       source $BASH_ENV
-      pwd
-      ls
       cd deploy/${STAGE} && terraform init -backend-config="access_key=${AWS_ACCESS_KEY_ID}" -backend-config="secret_key=${AWS_SECRET_ACCESS_KEY}"
 
 terraform_validate: &terraform_validate
