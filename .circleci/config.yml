@@ -49,8 +49,7 @@ terraform_validate: &terraform_validate
     command: |
       source $BASH_ENV
       cd deploy/${STAGE} && terraform validate
-      TF_VAR_aws_access_key=$AWS_ACCESS_KEY_ID TF_VAR_aws_secret_key=$AWS_SECRET_ACCESS_KEY TF_VAR_eg_aws_region=$AWS_DEFAULT_REGION TF_VAR_eg_account_id=$AWS_ACCOUNT_ID terraform import aws_vpc.main vpc-0b8b27954332338d2
-      TF_VAR_aws_access_key=$AWS_ACCESS_KEY_ID TF_VAR_aws_secret_key=$AWS_SECRET_ACCESS_KEY TF_VAR_eg_aws_region=$AWS_DEFAULT_REGION TF_VAR_eg_account_id=$AWS_ACCOUNT_ID terraform import aws_security_group.security_group sg-0275ecdb1314f8443
+      TF_VAR_aws_access_key=$AWS_ACCESS_KEY_ID TF_VAR_aws_secret_key=$AWS_SECRET_ACCESS_KEY TF_VAR_eg_aws_region=$AWS_DEFAULT_REGION TF_VAR_eg_account_id=$AWS_ACCOUNT_ID terraform import aws_subnet.main subnet-004e2ae768ed6992f
 
 terraform_plan: &terraform_plan
   run:
