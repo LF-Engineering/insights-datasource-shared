@@ -670,3 +670,26 @@ resource "aws_subnet" "main" {
     Name = "Main"
   }
 }
+
+resource "aws_internet_gateway" "gateway" {
+  vpc_id = aws_vpc.main.id
+}
+
+resource "aws_default_route_table" "public" {
+  default_route_table_id = aws_vpc.main.main_route_table_id
+}
+
+resource "aws_route" "public_internet_gateway" {
+  route_table_id         = aws_default_route_table.public.id
+  destination_cidr_block = "0.0.0.0/0"
+  gateway_id             = aws_internet_gateway.gateway.id
+
+  timeouts {
+    create = "5m"
+  }
+}
+
+resource "aws_route_table_association" "public" {
+  subnet_id      = aws_subnet.main.id
+  route_table_id = aws_default_route_table.public.id
+}
