@@ -138,3 +138,5 @@ workflows:
               ignore: /.*/
             tags:
               only: /^v\d+(\.\d+)?(\.\d+)?$/
+          requires:
+            - approve-prod

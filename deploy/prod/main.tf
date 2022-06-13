@@ -816,7 +816,7 @@ data "aws_iam_policy_document" "kms_use" {
       "kms:DescribeKey",
     ]
     resources = [
-      "arn:aws:kms:${var.eg_aws_region}:${var.eg_account_id}:key/0e300d58-4042-41e7-b6f1-d3bb7b35305f"
+      "arn:aws:kms:${var.eg_aws_region}:${var.eg_account_id}:key/0434cd25-c409-43af-8b69-8873fbf227f8"
     ]
   }
 }
