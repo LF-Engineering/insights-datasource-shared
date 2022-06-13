@@ -112,18 +112,22 @@ workflows:
             - development
           filters:
             branches:
-              only: test-kms #main
+              only: main
           requires:
             - validate_dev
       - validate_prod:
           filters:
             branches:
-              only: test-kms #main
+              ignore: /.*/
+            tags:
+              only: /^v\d+(\.\d+)?(\.\d+)?$/
       - approve-prod:
           type: approval
           filters:
             branches:
-              only: test-kms #main
+              ignore: /.*/
+            tags:
+              only: /^v\d+(\.\d+)?(\.\d+)?$/
           requires:
             - validate_prod
       - deploy_prod:
@@ -131,4 +135,8 @@ workflows:
             - production
           filters:
             branches:
-              only: test-kms #main
+              ignore: /.*/
+            tags:
+              only: /^v\d+(\.\d+)?(\.\d+)?$/
+          requires:
+            - approve-prod
