@@ -684,6 +684,36 @@ resource "aws_ecs_task_definition" "insights-scheduler-task" {
   ])
 }
 
+/* ECS repositories association connector task definition */
+resource "aws_ecs_task_definition" "insights-repositories-association-task" {
+  family                   = "insights-repositories-association-task"
+  requires_compatibilities = ["FARGATE"]
+  network_mode             = "awsvpc"
+  cpu                      = "512"
+  memory                   = "1024"
+  execution_role_arn       = aws_iam_role.ecs_task_execution_role.arn
+  task_role_arn            = aws_iam_role.ecs_task_role.arn
+  container_definitions    = jsonencode([
+    {
+      name      = "insights-repositories-association"
+      image     = "${var.eg_account_id}.dkr.ecr.${var.eg_aws_region}.amazonaws.com/insights-repositories-association:latest"
+      cpu       = 512
+      memory    = 2048
+      essential = true
+      logConfiguration : {
+        "logDriver" : "awslogs",
+        "options" : {
+          "awslogs-group" : "insights-ecs-repositories-association",
+          "awslogs-region" : var.eg_aws_region,
+          "awslogs-create-group" : "true",
+          "awslogs-stream-prefix" : "ecs"
+        }
+      }
+    }
+  ])
+
+}
+
 resource "aws_vpc" "main" {
   cidr_block = "10.0.0.0/16"
 }
