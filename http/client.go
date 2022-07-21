@@ -14,12 +14,21 @@ type ClientProvider struct {
 }
 
 // NewClientProvider initiate a new client object
-func NewClientProvider(timeout time.Duration) *ClientProvider {
-	return &ClientProvider{
+//  timeout - http request time
+//  allowRedirect - allow request redirects on requested url or not
+func NewClientProvider(timeout time.Duration, allowRedirect bool) *ClientProvider {
+	CancelRedirect := func(req *http.Request, via []*http.Request) error {
+		return http.ErrUseLastResponse
+	}
+	httpClientProvider := &ClientProvider{
 		httpclient: &http.Client{
 			Timeout: timeout,
 		},
 	}
+	if !allowRedirect {
+		httpClientProvider.httpclient.CheckRedirect = CancelRedirect
+	}
+	return httpClientProvider
 }
 
 // Response returned from http request
