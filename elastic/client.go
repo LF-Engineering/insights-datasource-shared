@@ -898,7 +898,7 @@ func (p *ClientProvider) CheckIfUUIDExists(index, uuidString string) (bool, erro
 //  updateFieldName es field to update eg author_name
 //  updateValue es field value to update to eg Rob Underwood
 func (p *ClientProvider) UpdateFieldByQuery(params Params, index, matchFieldName, matchValue, updateFieldName, updateValue string) (bool, error) {
-	httpClientProvider := libHttp.NewClientProvider(time.Minute)
+	httpClientProvider := libHttp.NewClientProvider(time.Minute, false)
 	url := fmt.Sprintf("https://%s:%s@%s/%s/_update_by_query", params.Username, params.Password, params.URL, index)
 
 	updateQuery := map[string]interface{}{
