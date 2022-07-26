@@ -112,7 +112,7 @@ workflows:
             - development
           filters:
             branches:
-              only: fix-scheduler-cron #main
+              only: main
           requires:
             - validate_dev
       - validate_prod:

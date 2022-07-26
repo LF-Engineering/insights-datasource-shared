@@ -110,6 +110,49 @@ resource "aws_iam_role" "ecs_task_role" {
 EOF
 }
 
+resource "aws_iam_role" "ecs_events" {
+  name = "ecs_events"
+
+  assume_role_policy = <<DOC
+{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Sid": "",
+      "Effect": "Allow",
+      "Principal": {
+        "Service": "events.amazonaws.com"
+      },
+      "Action": "sts:AssumeRole"
+    }
+  ]
+}
+DOC
+}
+
+resource "aws_iam_role_policy" "ecs_events_run_task_with_any_role" {
+  name = "ecs_events_run_task_with_any_role"
+  role = aws_iam_role.ecs_events.id
+
+  policy = <<DOC
+{
+    "Version": "2012-10-17",
+    "Statement": [
+        {
+            "Effect": "Allow",
+            "Action": "iam:PassRole",
+            "Resource": "*"
+        },
+        {
+            "Effect": "Allow",
+            "Action": "ecs:RunTask",
+            "Resource": "*"
+        }
+    ]
+}
+DOC
+}
+
 /* ECS task definitions */
 resource "aws_ecs_task_definition" "insights-connector-git-task" {
   family                   = "insights-connector-git-task"
@@ -696,7 +739,7 @@ resource "aws_cloudwatch_event_target" "ecs_scheduler_cron_task" {
   rule      = aws_cloudwatch_event_rule.cron_midnight.name
   target_id = "insights-scheduler-cron"
   arn       = aws_ecs_cluster.insights-ecs-cluster.arn
-  role_arn  = aws_iam_role.ecs_task_execution_role.arn
+  role_arn  = aws_iam_role.ecs_events.arn
   ecs_target {
     launch_type         = "FARGATE"
     platform_version    = "LATEST"
