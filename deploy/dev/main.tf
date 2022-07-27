@@ -78,8 +78,7 @@ resource "aws_iam_role" "ecs_task_execution_role" {
      "Principal": {
        "Service": [
           "ecs-tasks.amazonaws.com",
-          "cloudwatch.amazonaws.com",
-          "events.amazonaws.com"
+          "cloudwatch.amazonaws.com"
         ]
      },
      "Effect": "Allow",
@@ -684,30 +683,6 @@ resource "aws_ecs_task_definition" "insights-scheduler-task" {
   ])
 }
 
-resource "aws_cloudwatch_event_rule" "cron_midnight" {
-  name                = "run_at_midnight"
-  description         = "Schedule trigger for run every day at midnight"
-  schedule_expression = "cron(0 6 * * ? *)"
-  is_enabled          = true
-}
-
-resource "aws_cloudwatch_event_target" "ecs_scheduler_cron_task" {
-  rule      = aws_cloudwatch_event_rule.cron_midnight.name
-  target_id = "insights-scheduler-cron"
-  arn       = aws_ecs_cluster.insights-ecs-cluster.arn
-  role_arn  = aws_iam_role.ecs_events.arn
-  ecs_target {
-    launch_type         = "FARGATE"
-    platform_version    = "LATEST"
-    task_count          = 1
-    task_definition_arn = aws_ecs_task_definition.insights-scheduler-task.arn
-    network_configuration {
-      subnets          = [aws_subnet.main.id]
-      assign_public_ip = true
-    }
-  }
-}
-
 /* ECS repositories association connector task definition */
 resource "aws_ecs_task_definition" "insights-repositories-association-task" {
   family                   = "insights-repositories-association-task"
@@ -736,6 +711,21 @@ resource "aws_ecs_task_definition" "insights-repositories-association-task" {
     }
   ])
 
+}
+
+/* ecs scheduler service */
+resource "aws_ecs_service" "insights-scheduler" {
+  name                = "insights-scheduler"
+  cluster             = aws_ecs_cluster.insights-ecs-cluster.id
+  task_definition     = aws_ecs_task_definition.insights-scheduler-task.arn
+  desired_count       = 1
+  launch_type         = "FARGATE"
+  scheduling_strategy = "REPLICA"
+  network_configuration {
+    security_groups  = [aws_security_group.security_group.id]
+    subnets          = [aws_subnet.main.id]
+    assign_public_ip = true
+  }
 }
 
 resource "aws_vpc" "main" {
