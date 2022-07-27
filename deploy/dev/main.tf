@@ -687,7 +687,7 @@ resource "aws_ecs_task_definition" "insights-scheduler-task" {
 resource "aws_cloudwatch_event_rule" "cron_midnight" {
   name                = "run_at_midnight"
   description         = "Schedule trigger for run every day at midnight"
-  schedule_expression = "cron(0 0 * * ? *)"
+  schedule_expression = "cron(0 6 * * ? *)"
   is_enabled          = true
 }
 
@@ -702,7 +702,6 @@ resource "aws_cloudwatch_event_target" "ecs_scheduler_cron_task" {
     task_count          = 1
     task_definition_arn = aws_ecs_task_definition.insights-scheduler-task.arn
     network_configuration {
-      security_groups  = [aws_security_group.security_group.id]
       subnets          = [aws_subnet.main.id]
       assign_public_ip = true
     }
