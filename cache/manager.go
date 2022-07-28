@@ -140,12 +140,7 @@ func (m *Manager) GetFileByKey(endpoint string, id string) ([]byte, error) {
 // UpdateFileByKey get file by key
 func (m *Manager) UpdateFileByKey(endpoint string, id string, data []byte) error {
 	key := fmt.Sprintf(Path, m.connector, endpoint, id)
-	b, err := json.Marshal(data)
-	if err != nil {
-		return err
-	}
-
-	err = m.s3Manager.SaveWithKey(b, key)
+	err := m.s3Manager.SaveWithKey(data, key)
 	if err != nil {
 		return err
 	}
