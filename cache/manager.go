@@ -118,3 +118,31 @@ func (m *Manager) SetLastSync(endpoint string, lastSync time.Time) error {
 	}
 	return nil
 }
+
+// GetFileByKey get file by key
+func (m *Manager) GetFileByKey(endpoint string, id string) ([]byte, error) {
+	key := fmt.Sprintf(Path, m.connector, endpoint, id)
+	data, err := m.s3Manager.Get(key)
+	if err != nil {
+		if aerr, ok := err.(awserr.Error); ok {
+			switch aerr.Code() {
+			case s3.ErrCodeNoSuchKey:
+				return data, nil
+			default:
+				return data, err
+			}
+		}
+		return data, err
+	}
+	return data, nil
+}
+
+// UpdateFileByKey get file by key
+func (m *Manager) UpdateFileByKey(endpoint string, id string, data []byte) error {
+	key := fmt.Sprintf(Path, m.connector, endpoint, id)
+	err := m.s3Manager.SaveWithKey(data, key)
+	if err != nil {
+		return err
+	}
+	return nil
+}
