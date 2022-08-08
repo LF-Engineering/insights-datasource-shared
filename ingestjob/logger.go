@@ -162,6 +162,7 @@ func (s *Logger) updateDocument(log Log, index string, docID string) error {
 		"updated_at":    time.Now().UTC(),
 		"status":        log.Status,
 		"message":       log.Message,
+		"task_arn":      log.TaskARN,
 	}
 
 	_, err := s.esClient.UpdateDocument(index, docID, doc)

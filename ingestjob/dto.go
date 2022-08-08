@@ -10,6 +10,7 @@ type Log struct {
 	CreatedAt     time.Time           `json:"created_at"`
 	UpdatedAt     time.Time           `json:"updated_at"`
 	Message       string              `json:"message"`
+	TaskARN       string              `json:"task_arn"`
 	From          *time.Time          `json:"from,omitempty"`
 	To            *time.Time          `json:"to,omitempty"`
 }
