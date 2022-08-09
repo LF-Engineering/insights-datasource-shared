@@ -8,6 +8,7 @@ import (
 	"time"
 )
 
+// GetContainerARN ...
 func GetContainerARN() (string, error) {
 	httpClient := http.NewClientProvider(60*time.Second, true)
 	statusCode, res, err := httpClient.Request(fmt.Sprintf("%s/task", os.Getenv("ECS_CONTAINER_METADATA_URI_V4")), "GET", nil, nil, nil)
