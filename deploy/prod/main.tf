@@ -712,6 +712,10 @@ resource "aws_ecs_task_definition" "insights-scheduler-task" {
         {
           name : "SCHEDULER_CIRCLECI_TOKEN",
           valueFrom : "arn:aws:ssm:${var.eg_aws_region}:${var.eg_account_id}:parameter/insights/circleci_token"
+        },
+        {
+          name : "SCHEDULER_ECS_CLUSTER_NAME",
+          valueFrom : "arn:aws:ssm:${var.eg_aws_region}:${var.eg_account_id}:parameter/insights_ecs_cluster_name"
         }
       ],
       logConfiguration : {
