@@ -917,14 +917,14 @@ data "aws_iam_policy_document" "describe_insights_tasks" {
       "ecs:DescribeTasks",
     ]
     resources = [
-      "arn:aws:kms:${var.eg_aws_region}:${var.eg_account_id}:task/insights-ecs-cluster/*"
+      "arn:aws:ecs:${var.eg_aws_region}:${var.eg_account_id}:task/insights-ecs-cluster/*"
     ]
   }
 }
 
 resource "aws_iam_policy" "describe_insights_tasks" {
   name        = "describeInsightsTasks"
-  description = "Policy allows using KMS keys"
+  description = "Policy allows using describe insights cluster tasks"
   policy      = data.aws_iam_policy_document.describe_insights_tasks.json
 }
 
