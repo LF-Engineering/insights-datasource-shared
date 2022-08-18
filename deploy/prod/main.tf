@@ -908,3 +908,27 @@ resource "aws_iam_role_policy_attachment" "test-attach" {
   role       = aws_iam_role.ecs_task_role.name
   policy_arn = aws_iam_policy.kms_use.arn
 }
+
+data "aws_iam_policy_document" "describe_insights_tasks" {
+  statement {
+    sid       = ""
+    effect    = "Allow"
+    actions   = [
+      "ecs:DescribeTasks",
+    ]
+    resources = [
+      "arn:aws:ecs:${var.eg_aws_region}:${var.eg_account_id}:task/insights-ecs-cluster/*"
+    ]
+  }
+}
+
+resource "aws_iam_policy" "describe_insights_tasks" {
+  name        = "describeInsightsTasks"
+  description = "Policy allows using describe insights cluster tasks"
+  policy      = data.aws_iam_policy_document.describe_insights_tasks.json
+}
+
+resource "aws_iam_role_policy_attachment" "attach-describe-tasks" {
+  role       = aws_iam_role.ecs_task_role.name
+  policy_arn = aws_iam_policy.describe_insights_tasks.arn
+}
