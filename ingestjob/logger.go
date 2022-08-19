@@ -6,23 +6,27 @@ import (
 	"strings"
 	"time"
 
+	"github.com/LF-Engineering/insights-datasource-shared/elastic"
 	"github.com/LF-Engineering/insights-datasource-shared/uuid"
 	jsoniter "github.com/json-iterator/go"
 )
 
 const (
-	logIndex   = "insights-connector"
-	tasksIndex = "insights-tasks"
-	InProgress = "inprogress"
-	Failed     = "failed"
-	Done       = "done"
-	Internal   = "internal"
+	logIndex    = "insights-connector"
+	tasksIndex  = "insights-tasks"
+	InProgress  = "inprogress"
+	Failed      = "failed"
+	Done        = "done"
+	Internal    = "internal"
+	getAttempts = 2
+	getDelay    = 3 * time.Second
 )
 
 // ESLogProvider used in connecting to ES logging server
 type ESLogProvider interface {
 	CreateDocument(index, documentID string, body []byte) ([]byte, error)
 	Get(index string, query map[string]interface{}, result interface{}) error
+	BackOffGet(index string, query map[string]interface{}, result interface{}, attempts uint, delay time.Duration) error
 	UpdateDocument(index string, id string, body interface{}) ([]byte, error)
 	Count(index string, query map[string]interface{}) (int, error)
 }
@@ -75,8 +79,8 @@ func (s *Logger) Write(log *Log) error {
 		},
 	}
 
-	var res TopHits
-	err = s.esClient.Get(fmt.Sprintf("%s-%s-log-%s", logIndex, log.Connector, s.environment), query, &res)
+	var res elastic.TopHitsStruct
+	err = s.esClient.BackOffGet(fmt.Sprintf("%s-%s-log-%s", logIndex, log.Connector, s.environment), query, &res, getAttempts, getDelay)
 	if err != nil || len(res.Hits.Hits) == 0 {
 		_, err := s.esClient.CreateDocument(index, docID, b)
 		return err
