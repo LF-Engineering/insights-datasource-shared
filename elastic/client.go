@@ -410,6 +410,7 @@ func (p *ClientProvider) Get(index string, query map[string]interface{}, result 
 	return nil
 }
 
+// BackOffGet get query result exactly as Get with a backoff delay
 func (p *ClientProvider) BackOffGet(index string, query map[string]interface{}, result interface{}, attempts uint, delay time.Duration) error {
 	var err error
 	for i := 1; i <= int(attempts); i++ {
