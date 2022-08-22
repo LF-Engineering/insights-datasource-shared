@@ -410,6 +410,26 @@ func (p *ClientProvider) Get(index string, query map[string]interface{}, result 
 	return nil
 }
 
+// BackOffGet get query result exactly as Get with a backoff delay
+func (p *ClientProvider) BackOffGet(index string, query map[string]interface{}, result interface{}, attempts uint, delay time.Duration) error {
+	var err error
+	for i := 1; i <= int(attempts); i++ {
+		d := delay * time.Duration(i)
+		err = p.Get(index, query, result)
+		if err != nil {
+			time.Sleep(d)
+			continue
+		}
+		res, ok := result.(TopHitsStruct)
+		if !ok || len(res.Hits.Hits) == 0 {
+			time.Sleep(d)
+			continue
+		}
+	}
+
+	return err
+}
+
 // GetStat gets statistics ex. max min, avg
 func (p *ClientProvider) GetStat(index string, field string, aggType string, mustConditions []map[string]interface{}, mustNotConditions []map[string]interface{}) (result time.Time, err error) {
 
