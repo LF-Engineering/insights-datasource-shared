@@ -634,10 +634,6 @@ resource "aws_ecs_task_definition" "insights-scheduler-task" {
           "value" : "true"
         },
         {
-          "name" : "JIRA_DISABLED",
-          "value" : "true"
-        },
-        {
           "name" : "CIRCLECI_DISABLED",
           "value" : "true"
         },
@@ -659,10 +655,6 @@ resource "aws_ecs_task_definition" "insights-scheduler-task" {
         },
         {
           "name" : "GROUPSIO_DISABLED",
-          "value" : "true"
-        },
-        {
-          "name" : "CONFLUENCE_DISABLED",
           "value" : "true"
         }
       ]
