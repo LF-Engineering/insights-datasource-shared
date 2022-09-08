@@ -622,23 +622,7 @@ resource "aws_ecs_task_definition" "insights-scheduler-task" {
           "value" : "prod"
         },
         {
-          "name" : "BUGZILLA_DISABLED",
-          "value" : "true"
-        },
-        {
           "name" : "BUGZILLAREST_DISABLED",
-          "value" : "true"
-        },
-        {
-          "name" : "DOCKERHUB_DISABLED",
-          "value" : "true"
-        },
-        {
-          "name" : "CIRCLECI_DISABLED",
-          "value" : "true"
-        },
-        {
-          "name" : "JENKINS_DISABLED",
           "value" : "true"
         },
         {
@@ -647,14 +631,6 @@ resource "aws_ecs_task_definition" "insights-scheduler-task" {
         },
         {
           "name" : "GOOGLEGROUPS_DISABLED",
-          "value" : "true"
-        },
-        {
-          "name" : "PIPERMAIL_DISABLED",
-          "value" : "true"
-        },
-        {
-          "name" : "GROUPSIO_DISABLED",
           "value" : "true"
         }
       ]
