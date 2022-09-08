@@ -158,7 +158,7 @@ resource "aws_ecs_task_definition" "insights-connector-git-task" {
   requires_compatibilities = ["FARGATE"]
   network_mode             = "awsvpc"
   cpu                      = "1024"
-  memory                   = "3072"
+  memory                   = "6144"
   execution_role_arn       = aws_iam_role.ecs_task_execution_role.arn
   task_role_arn            = aws_iam_role.ecs_task_role.arn
   container_definitions    = jsonencode([
@@ -166,7 +166,7 @@ resource "aws_ecs_task_definition" "insights-connector-git-task" {
       name      = "insights-connector-git"
       image     = "${var.eg_account_id}.dkr.ecr.${var.eg_aws_region}.amazonaws.com/insights-connector-git:latest"
       cpu       = 1024
-      memory    = 3072
+      memory    = 6144
       essential = true
       logConfiguration : {
         "logDriver" : "awslogs",
