@@ -711,7 +711,7 @@ resource "aws_ecs_task_definition" "insights-repositories-association-task" {
   container_definitions    = jsonencode([
     {
       name      = "insights-repositories-association"
-      image     = "${var.eg_account_id}.dkr.ecr.${var.eg_aws_region}.amazonaws.com/insights-repositories-association:latest"
+      image     = "${var.eg_account_id}.dkr.ecr.${var.eg_aws_region}.amazonaws.com/insights-repositories-association:stable"
       cpu       = 128
       memory    = 512
       essential = true
