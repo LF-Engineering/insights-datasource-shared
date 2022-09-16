@@ -14,8 +14,9 @@ type ClientProvider struct {
 }
 
 // NewClientProvider initiate a new client object
-//  timeout - http request time
-//  allowRedirect - allow request redirects on requested url or not
+//
+//	timeout - http request time
+//	allowRedirect - allow request redirects on requested url or not
 func NewClientProvider(timeout time.Duration, allowRedirect bool) *ClientProvider {
 	CancelRedirect := func(req *http.Request, via []*http.Request) error {
 		return http.ErrUseLastResponse
@@ -39,9 +40,18 @@ type Response struct {
 
 // Request http
 func (h *ClientProvider) Request(url string, method string, header map[string]string, body []byte, params map[string]string) (statusCode int, resBody []byte, err error) {
+	resp, resBody, err := h.RequestWithResponse(url, method, header, body, params)
+	if err != nil || resBody == nil {
+		return 0, nil, err
+	}
+	return resp.StatusCode, resBody, err
+}
+
+// RequestWithResponse http
+func (h *ClientProvider) RequestWithResponse(url string, method string, header map[string]string, body []byte, params map[string]string) (*http.Response, []byte, error) {
 	req, err := http.NewRequest(method, url, bytes.NewBuffer(body))
 	if err != nil {
-		return 0, nil, err
+		return nil, nil, err
 	}
 
 	if cType, ok := header["Content-Type"]; !ok || cType == "application/json" {
@@ -66,16 +76,16 @@ func (h *ClientProvider) Request(url string, method string, header map[string]st
 	// Do request
 	res, err := h.httpclient.Do(req)
 	if err != nil {
-		return 0, nil, err
+		return nil, nil, err
 	}
 
 	var buf bytes.Buffer
 	_, err = buf.ReadFrom(res.Body)
 	if err != nil {
-		return 0, nil, err
+		return nil, nil, err
 	}
 
-	return res.StatusCode, buf.Bytes(), nil
+	return res, buf.Bytes(), nil
 }
 
 // RequestCSV requests http API that returns csv result
