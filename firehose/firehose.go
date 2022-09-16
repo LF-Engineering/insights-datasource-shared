@@ -21,7 +21,7 @@ const (
 	maxChunkSize  = 1020000
 )
 
-//Config aws configuration
+// Config aws configuration
 type Config struct {
 	Endpoint string
 	Region   string
