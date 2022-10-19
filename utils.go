@@ -485,7 +485,13 @@ func StripURL(urlStr string) string {
 }
 
 // IsBotIdentity check if username is for a bot identity
-func IsBotIdentity(userName string) bool {
+func IsBotIdentity(userName string, email string) bool {
+	for _, e := range emailContained {
+		if strings.Contains(email, e) {
+			return true
+		}
+	}
+
 	for _, botName := range botNames {
 		if userName == botName {
 			return true
@@ -527,6 +533,15 @@ func IsBotIdentity(userName string) bool {
 	return false
 }
 
+func IsBotEmail(email string) bool {
+	for _, e := range emailContained {
+		if strings.Contains(email, e) {
+			return true
+		}
+	}
+	return false
+}
+
 var (
 	botNames = []string{
 		"facebook-github-whois-bot-0",
@@ -545,4 +560,5 @@ var (
 	botContained      = []string{"[bot]", "[robot]", "clabot", "cla-bot", "-bot-", "envoy-filter-example"}
 	suffixWithPrefix  = []string{"travis%bot"}
 	containWithSuffix = []string{"%-ci%bot"}
+	emailContained    = []string{"-robot@", "[bot]@", "-bot@", ".ci.robot@", ".bot@", "releasebot@", "-bot-", "-robot-"}
 )
