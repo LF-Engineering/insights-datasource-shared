@@ -498,6 +498,12 @@ func IsBotIdentity(userName string, email string) bool {
 		}
 	}
 
+	for _, botE := range botEmails {
+		if email == botE {
+			return true
+		}
+	}
+
 	for _, botSuffix := range botSuffixes {
 		if strings.HasSuffix(userName, botSuffix) {
 			return true
@@ -552,4 +558,5 @@ var (
 	suffixWithPrefix  = []string{"travis%bot"}
 	containWithSuffix = []string{"%-ci%bot"}
 	emailContained    = []string{"-robot@", "[bot]@", "-bot@", ".ci.robot@", ".bot@", "releasebot@", "-bot-", "-robot-"}
+	botEmails         = []string{"zowe.robot@gmail.com"}
 )
