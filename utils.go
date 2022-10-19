@@ -533,15 +533,6 @@ func IsBotIdentity(userName string, email string) bool {
 	return false
 }
 
-func IsBotEmail(email string) bool {
-	for _, e := range emailContained {
-		if strings.Contains(email, e) {
-			return true
-		}
-	}
-	return false
-}
-
 var (
 	botNames = []string{
 		"facebook-github-whois-bot-0",
