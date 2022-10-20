@@ -144,7 +144,12 @@ resource "aws_iam_role_policy" "ecs_events_run_task_with_any_role" {
         },
         {
             "Effect": "Allow",
-            "Action": "ecs:RunTask",
+           "Action": [
+                "ecs:RunTask",
+                "ecs:ListClusters",
+                "ecs:ListContainerInstances",
+                "ecs:DescribeContainerInstances"
+                ],
             "Resource": "*"
         }
     ]
@@ -610,6 +615,30 @@ resource "aws_ecs_task_definition" "insights-scheduler-task" {
   execution_role_arn       = aws_iam_role.ecs_task_execution_role.arn
   task_role_arn            = aws_iam_role.ecs_task_role.arn
   container_definitions    = jsonencode([
+    {
+      name      = "datadog-agent"
+      image     = "public.ecr.aws/datadog/agent:latest"
+      cpu       = 256
+      memory    = 512
+      essential = true
+      environment : [
+        {
+          "name" : "DD_API_KEY",
+          valueFrom : "arn:aws:ssm:${var.eg_aws_region}:${var.eg_account_id}:parameter/cloudops-datadog-api-key"
+        },
+        {
+          "name" : "ECS_FARGATE",
+          "value" : true
+        },
+        {
+          "name": "DD_SITE",
+          "value": "datadoghq.com"
+        },
+        {
+          "DD_APM_ENABLED": true
+        }
+      ]
+    },
     {
       name      = "insights-scheduler"
       image     = "${var.eg_account_id}.dkr.ecr.${var.eg_aws_region}.amazonaws.com/lfx-insights-scheduler:latest"
