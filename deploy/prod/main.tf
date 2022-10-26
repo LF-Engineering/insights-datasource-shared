@@ -144,7 +144,12 @@ resource "aws_iam_role_policy" "ecs_events_run_task_with_any_role" {
         },
         {
             "Effect": "Allow",
-            "Action": "ecs:RunTask",
+           "Action": [
+                "ecs:RunTask",
+                "ecs:ListClusters",
+                "ecs:ListContainerInstances",
+                "ecs:DescribeContainerInstances"
+                ],
             "Resource": "*"
         }
     ]
