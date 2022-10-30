@@ -346,7 +346,6 @@ func Request(
 				data = append(data, result.([]byte)...)
 				tag := FilterRedacted(fmt.Sprintf("%s.%s(#h=%d,pl=%d,cks=%d) -> sts=%d,js=0,resp=%d,cks=%d,hdrs=%d", method, url, len(headers), len(payload), len(cookies), status, len(result.([]byte)), len(outCookies), len(outHeaders)))
 				SetL2Cache(ctx, hsh, tag, data, cacheDuration)
-				return
 			}()
 		}
 	}
