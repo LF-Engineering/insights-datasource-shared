@@ -485,7 +485,7 @@ func StripURL(urlStr string) string {
 }
 
 // IsBotIdentity check if username is for a bot identity
-func IsBotIdentity(name, username, email, datasource string) bool {
+func IsBotIdentity(name, username, email, datasource string, botNameR string, botUsernameR string, botEmailR string) bool {
 	if datasource == "git" || datasource == "github" || datasource == "gerrit" {
 		if name != "" {
 			nameR := regexp.MustCompile(botNameR)
@@ -507,9 +507,3 @@ func IsBotIdentity(name, username, email, datasource string) bool {
 	}
 	return false
 }
-
-var (
-	botNameR     = `^(facebook-github-whois-bot-0|fossabot|claassistant|containersshbuilder|knative-automation|covbot|cdk8s-automation|github-action-benchmark|wasmcloud-automation|goreleaserbot|imgbotapp|backstage-service|openssl-machine|sizebot|dependabot|cncf-ci|poiana|svcbot-qecnsdp|nsmbot|ti-srebot|cf-buildpacks-eng|bosh-ci-push-pull|gprasath|zephyr-github|zephyrbot|strimzi-ci|athenabot|k8s-reviewable|codecov-io|grpc-testing|k8s-teamcity-mesosphere|angular-builds|devstats-sync|googlebot|hibernate-ci|coveralls|rktbot|coreosbot|web-flow|prometheus-roobot|cncf-bot|kernelprbot|istio-testing|spinnakerbot|pikbot|spinnaker-release|golangcibot|opencontrail-ci-admin|titanium-octobot|asfgit|appveyorbot|cadvisorjenkinsbot|gitcoinbot|katacontainersbot|prombot|prowbot|zowe-robot|cf-gitbot|pfs-ci-gitbot|ElectronBot|electron-bot)$|((-bot|-robot|-jenkins|-testing|cibot|-ci|-gerrit)$|^(k8s-|bot-|robot-|jenkins-|codecov-)|\[bot\]|\[robot\]|clabot|cla-bot|-bot-|Dead Code Bot|envoy-filter-example)|^travis.*bot$|-ci.*bot$`
-	botUsernameR = `^(facebook-github-whois-bot-0|fossabot|claassistant|containersshbuilder|knative-automation|covbot|cdk8s-automation|github-action-benchmark|wasmcloud-automation|goreleaserbot|imgbotapp|backstage-service|openssl-machine|sizebot|dependabot|cncf-ci|poiana|svcbot-qecnsdp|nsmbot|ti-srebot|cf-buildpacks-eng|bosh-ci-push-pull|gprasath|zephyr-github|zephyrbot|strimzi-ci|athenabot|k8s-reviewable|codecov-io|grpc-testing|k8s-teamcity-mesosphere|angular-builds|devstats-sync|googlebot|hibernate-ci|coveralls|rktbot|coreosbot|web-flow|prometheus-roobot|cncf-bot|kernelprbot|istio-testing|spinnakerbot|pikbot|spinnaker-release|golangcibot|opencontrail-ci-admin|titanium-octobot|asfgit|appveyorbot|cadvisorjenkinsbot|gitcoinbot|katacontainersbot|prombot|prowbot|zowe-robot|cf-gitbot|pfs-ci-gitbot|electron-bot)$|((-bot|-robot|-jenkins|-testing|cibot|-ci|-gerrit)$|^(k8s-|bot-|robot-|jenkins-|codecov-)|\[bot\]|\[robot\]|clabot|cla-bot|-bot-|envoy-filter-example)|^travis.*bot$|-ci.*bot$`
-	botEmailR    = `^(zowe\.robot\@gmail\.com|github\+dockerlibrarybot\@infosiftr\.com|zziming\-ghbot\@vmware\.com|ci\@argoproj\.com)$|^(ci\@|bot\@|jenkins\-|jenkins\@)|(\-robot\@|\[bot\]\@|\-bot\@|\.ci\.robot\@|\.bot\@|releasebot\@|\-bot\-|\-robot\-|nsmbot\@|kubevirtbot\@|\-automation\@|cibot\@|jenkins\-releng\@)`
-)
