@@ -124,7 +124,6 @@ func ESCacheSet(ctx *Ctx, key string, entry *ESCacheEntry) {
 		Printf("Method:%s url:%s data: %s status:%d\n%s\n", method, url, sData, resp.StatusCode, sBody)
 		return
 	}
-	return
 }
 
 // ESCacheDelete - delete cache key
@@ -510,5 +509,4 @@ func SetLastUpdate(ctx *Ctx, key string, when time.Time) {
 		Printf("Method:%s url:%s data: %s status:%d\n%s\n", method, url, sData, resp.StatusCode, sBody)
 		return
 	}
-	return
 }

@@ -402,7 +402,7 @@ func MatchGroupsArray(re *regexp.Regexp, arg string) (result map[string][]string
 			continue
 		}
 		for i, name := range names {
-			ary, _ := result[name]
+			ary := result[name]
 			result[name] = append(ary, m[i+1])
 		}
 	}
@@ -485,71 +485,25 @@ func StripURL(urlStr string) string {
 }
 
 // IsBotIdentity check if username is for a bot identity
-func IsBotIdentity(userName string, email string) bool {
-	for _, e := range emailContained {
-		if strings.Contains(email, e) {
-			return true
+func IsBotIdentity(name, username, email, datasource string, botNameR string, botUsernameR string, botEmailR string) bool {
+	if datasource == "git" || datasource == "github" || datasource == "gerrit" {
+		if name != "" {
+			nameR := regexp.MustCompile(botNameR)
+			if nameR.MatchString(name) {
+				return true
+			}
+		}
+		if username != "" {
+			usernameR := regexp.MustCompile(botUsernameR)
+			if usernameR.MatchString(username) {
+				return true
+			}
+		} else if email != "" {
+			emailR := regexp.MustCompile(botEmailR)
+			if emailR.MatchString(email) {
+				return true
+			}
 		}
 	}
-
-	for _, botName := range botNames {
-		if userName == botName {
-			return true
-		}
-	}
-
-	for _, botSuffix := range botSuffixes {
-		if strings.HasSuffix(userName, botSuffix) {
-			return true
-		}
-	}
-
-	for _, botPrefix := range botPrefixes {
-		if strings.HasPrefix(userName, botPrefix) {
-			return true
-		}
-	}
-
-	for _, botContent := range botContained {
-		if strings.Contains(userName, botContent) {
-			return true
-		}
-	}
-
-	for _, swf := range suffixWithPrefix {
-		l := strings.Split(swf, "%")
-		if strings.HasPrefix(userName, l[0]) && strings.HasSuffix(userName, l[1]) {
-			return true
-		}
-	}
-
-	for _, cws := range containWithSuffix {
-		l := strings.Split(cws, "%")
-		if strings.Contains(userName, l[1]) && strings.HasSuffix(userName, l[2]) {
-			return true
-		}
-	}
-
 	return false
 }
-
-var (
-	botNames = []string{
-		"facebook-github-whois-bot-0",
-		"knative-automation", "covbot", "cdk8s-automation", "github-action-benchmark",
-		"goreleaserbot", "imgbotapp", "backstage-service", "openssl-machine", "sizebot",
-		"dependabot", "cncf-ci", "poiana", "svcbot-qecnsdp", "nsmbot", "ti-srebot", "cf-buildpacks-eng",
-		"bosh-ci-push-pull", "gprasath", "zephyr-github", "zephyrbot", "strimzi-ci", "athenabot",
-		"k8s-reviewable", "codecov-io", "grpc-testing", "k8s-teamcity-mesosphere", "angular-builds",
-		"devstats-sync", "googlebot", "hibernate-ci", "coveralls", "rktbot", "coreosbot", "web-flow",
-		"prometheus-roobot", "cncf-bot", "kernelprbot", "istio-testing", "spinnakerbot", "pikbot",
-		"spinnaker-release", "golangcibot", "opencontrail-ci-admin", "titanium-octobot", "asfgit",
-		"appveyorbot", "cadvisorjenkinsbot", "gitcoinbot", "katacontainersbot", "prombot", "prowbot"}
-
-	botSuffixes       = []string{"-bot", "-robot", "-jenkins", "-testing", "cibot", "-ci", "-gerrit"}
-	botPrefixes       = []string{"k8s-", "bot-", "robot-", "jenkins-", "codecov-"}
-	botContained      = []string{"[bot]", "[robot]", "clabot", "cla-bot", "-bot-", "envoy-filter-example"}
-	suffixWithPrefix  = []string{"travis%bot"}
-	containWithSuffix = []string{"%-ci%bot"}
-	emailContained    = []string{"-robot@", "[bot]@", "-bot@", ".ci.robot@", ".bot@", "releasebot@", "-bot-", "-robot-"}
-)
