@@ -349,15 +349,15 @@ resource "aws_ecs_task_definition" "insights-connector-github-task" {
       secrets : [
         {
           name : "BOT_NAME_REGEX",
-          valueFrom : "arn:aws:ssm:${var.eg_aws_region}:${var.eg_account_id}:parameter/insights/bot_name_regex"
+          valueFrom : "arn:aws:ssm:${var.eg_aws_region}:${var.eg_account_id}:parameter/insights/connectors/bot_name_regex"
         },
         {
           name : "BOT_USERNAME_REGEX",
-          valueFrom : "arn:aws:ssm:${var.eg_aws_region}:${var.eg_account_id}:parameter/insights/bot_username_regex"
+          valueFrom : "arn:aws:ssm:${var.eg_aws_region}:${var.eg_account_id}:parameter/insights/connectors/bot_username_regex"
         },
         {
           name : "BOT_EMAIL_REGEX",
-          valueFrom : "arn:aws:ssm:${var.eg_aws_region}:${var.eg_account_id}:parameter/insights/bot_email_regex"
+          valueFrom : "arn:aws:ssm:${var.eg_aws_region}:${var.eg_account_id}:parameter/insights/connectors/bot_email_regex"
         }
       ],
       logConfiguration : {
