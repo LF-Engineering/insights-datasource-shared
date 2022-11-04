@@ -261,16 +261,16 @@ resource "aws_ecs_task_definition" "insights-connector-gerrit-task" {
   family                   = "insights-connector-gerrit-task"
   requires_compatibilities = ["FARGATE"]
   network_mode             = "awsvpc"
-  cpu                      = "256"
-  memory                   = "512"
+  cpu                      = "512"
+  memory                   = "4096"
   execution_role_arn       = aws_iam_role.ecs_task_execution_role.arn
   task_role_arn            = aws_iam_role.ecs_task_role.arn
   container_definitions    = jsonencode([
     {
       name      = "insights-connector-gerrit"
       image     = "${var.eg_account_id}.dkr.ecr.${var.eg_aws_region}.amazonaws.com/insights-connector-gerrit:stable"
-      cpu       = 128
-      memory    = 512
+      cpu       = 512
+      memory    = 4096
       essential = true
       secrets : [
         {
@@ -336,7 +336,7 @@ resource "aws_ecs_task_definition" "insights-connector-github-task" {
   requires_compatibilities = ["FARGATE"]
   network_mode             = "awsvpc"
   cpu                      = "512"
-  memory                   = "2048"
+  memory                   = "4096"
   execution_role_arn       = aws_iam_role.ecs_task_execution_role.arn
   task_role_arn            = aws_iam_role.ecs_task_role.arn
   container_definitions    = jsonencode([
@@ -344,7 +344,7 @@ resource "aws_ecs_task_definition" "insights-connector-github-task" {
       name      = "insights-connector-github"
       image     = "${var.eg_account_id}.dkr.ecr.${var.eg_aws_region}.amazonaws.com/insights-connector-github:stable"
       cpu       = 512
-      memory    = 2048
+      memory    = 4096
       essential = true
       secrets : [
         {
