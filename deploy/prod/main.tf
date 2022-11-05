@@ -358,6 +358,10 @@ resource "aws_ecs_task_definition" "insights-connector-github-task" {
         {
           name : "BOT_EMAIL_REGEX",
           valueFrom : "arn:aws:ssm:${var.eg_aws_region}:${var.eg_account_id}:parameter/insights/connectors/bot_email_regex"
+        },
+        {
+          name : "FETCH_PAGES",
+          valueFrom : "arn:aws:ssm:${var.eg_aws_region}:${var.eg_account_id}:parameter/insights/connectors/fetch_pages"
         }
       ],
       logConfiguration : {
