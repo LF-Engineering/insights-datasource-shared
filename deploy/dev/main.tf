@@ -212,6 +212,20 @@ resource "aws_ecs_task_definition" "insights-connector-jira-task" {
       cpu       = 128
       memory    = 512
       essential = true
+      secrets : [
+        {
+          name : "BOT_NAME_REGEX",
+          valueFrom : "arn:aws:ssm:${var.eg_aws_region}:${var.eg_account_id}:parameter/insights/connectors/bot_name_regex"
+        },
+        {
+          name : "BOT_USERNAME_REGEX",
+          valueFrom : "arn:aws:ssm:${var.eg_aws_region}:${var.eg_account_id}:parameter/insights/connectors/bot_username_regex"
+        },
+        {
+          name : "BOT_EMAIL_REGEX",
+          valueFrom : "arn:aws:ssm:${var.eg_aws_region}:${var.eg_account_id}:parameter/insights/connectors/bot_email_regex"
+        }
+      ],
       logConfiguration : {
         "logDriver" : "awslogs",
         "options" : {
@@ -242,6 +256,20 @@ resource "aws_ecs_task_definition" "insights-connector-confluence-task" {
       cpu       = 512
       memory    = 2048
       essential = true
+      secrets : [
+        {
+          name : "BOT_NAME_REGEX",
+          valueFrom : "arn:aws:ssm:${var.eg_aws_region}:${var.eg_account_id}:parameter/insights/connectors/bot_name_regex"
+        },
+        {
+          name : "BOT_USERNAME_REGEX",
+          valueFrom : "arn:aws:ssm:${var.eg_aws_region}:${var.eg_account_id}:parameter/insights/connectors/bot_username_regex"
+        },
+        {
+          name : "BOT_EMAIL_REGEX",
+          valueFrom : "arn:aws:ssm:${var.eg_aws_region}:${var.eg_account_id}:parameter/insights/connectors/bot_email_regex"
+        }
+      ],
       logConfiguration : {
         "logDriver" : "awslogs",
         "options" : {
