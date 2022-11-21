@@ -230,6 +230,38 @@ resource "aws_ecs_task_definition" "insights-connector-jira-task" {
   task_role_arn            = aws_iam_role.ecs_task_role.arn
   container_definitions    = jsonencode([
     {
+      name      = "datadog-agent"
+      image     = "public.ecr.aws/datadog/agent:latest"
+      cpu       = 256
+      memory    = 512
+      essential = true
+      portMappings = [
+        {
+          protocol      = "tcp",
+          hostPort      = 8126,
+          containerPort = 8126
+        }
+      ]
+      environment : [
+        {
+          "name" : "DD_API_KEY",
+          valueFrom : "arn:aws:ssm:${var.eg_aws_region}:${var.eg_account_id}:parameter/cloudops-datadog-api-key"
+        },
+        {
+          "name" : "ECS_FARGATE",
+          "value" : true
+        },
+        {
+          "name": "DD_SITE",
+          "value": "datadoghq.com"
+        },
+        {
+          "name": "DD_APM_ENABLED"
+          "value": true
+        }
+      ]
+    },
+    {
       name      = "insights-connector-jira"
       image     = "${var.eg_account_id}.dkr.ecr.${var.eg_aws_region}.amazonaws.com/insights-connector-jira:latest"
       cpu       = 128
