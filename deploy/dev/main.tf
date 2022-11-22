@@ -496,6 +496,8 @@ resource "aws_ecs_task_definition" "insights-connector-github-task" {
   family                   = "insights-connector-github-task"
   requires_compatibilities = ["FARGATE"]
   network_mode             = "awsvpc"
+  cpu                      = "512"
+  memory                   = "2048"
   execution_role_arn       = aws_iam_role.ecs_task_execution_role.arn
   task_role_arn            = aws_iam_role.ecs_task_role.arn
   container_definitions    = jsonencode([
@@ -534,8 +536,6 @@ resource "aws_ecs_task_definition" "insights-connector-github-task" {
     {
       name      = "insights-connector-github"
       image     = "${var.eg_account_id}.dkr.ecr.${var.eg_aws_region}.amazonaws.com/insights-connector-github:latest"
-      cpu       = 512
-      memory    = 2048
       essential = true
       secrets : [
         {
