@@ -187,7 +187,7 @@ resource "aws_ecs_task_definition" "insights-connector-git-task" {
         },
         {
           "name" : "ECS_FARGATE",
-          "value" : true
+          "value" : "true"
         },
         {
           "name": "DD_SITE",
@@ -195,7 +195,7 @@ resource "aws_ecs_task_definition" "insights-connector-git-task" {
         },
         {
           "name": "DD_APM_ENABLED"
-          "value": true
+          "value": "true"
         }
       ]
     },
@@ -263,7 +263,7 @@ resource "aws_ecs_task_definition" "insights-connector-jira-task" {
         },
         {
           "name" : "ECS_FARGATE",
-          "value" : true
+          "value" : "true"
         },
         {
           "name": "DD_SITE",
@@ -271,7 +271,7 @@ resource "aws_ecs_task_definition" "insights-connector-jira-task" {
         },
         {
           "name": "DD_APM_ENABLED"
-          "value": true
+          "value": "true"
         }
       ]
     },
@@ -339,7 +339,7 @@ resource "aws_ecs_task_definition" "insights-connector-confluence-task" {
         },
         {
           "name" : "ECS_FARGATE",
-          "value" : true
+          "value" : "true"
         },
         {
           "name": "DD_SITE",
@@ -347,7 +347,7 @@ resource "aws_ecs_task_definition" "insights-connector-confluence-task" {
         },
         {
           "name": "DD_APM_ENABLED"
-          "value": true
+          "value": "true"
         }
       ]
     },
@@ -415,7 +415,7 @@ resource "aws_ecs_task_definition" "insights-connector-gerrit-task" {
         },
         {
           "name" : "ECS_FARGATE",
-          "value" : true
+          "value" : "true"
         },
         {
           "name": "DD_SITE",
@@ -423,7 +423,7 @@ resource "aws_ecs_task_definition" "insights-connector-gerrit-task" {
         },
         {
           "name": "DD_APM_ENABLED"
-          "value": true
+          "value": "true"
         }
       ]
     },
@@ -521,7 +521,7 @@ resource "aws_ecs_task_definition" "insights-connector-github-task" {
         },
         {
           "name" : "ECS_FARGATE",
-          "value" : true
+          "value" : "true"
         },
         {
           "name": "DD_SITE",
@@ -529,7 +529,7 @@ resource "aws_ecs_task_definition" "insights-connector-github-task" {
         },
         {
           "name": "DD_APM_ENABLED"
-          "value": true
+          "value": "true"
         }
       ]
     },
@@ -869,7 +869,7 @@ resource "aws_ecs_task_definition" "insights-scheduler-task" {
         },
         {
           "name" : "ECS_FARGATE",
-          "value" : true
+          "value" : "true"
         },
         {
           "name": "DD_SITE",
@@ -877,7 +877,7 @@ resource "aws_ecs_task_definition" "insights-scheduler-task" {
         },
         {
           "name": "DD_APM_ENABLED"
-          "value": true
+          "value": "true"
         }
       ]
     },
