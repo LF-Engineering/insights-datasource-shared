@@ -868,10 +868,6 @@ resource "aws_ecs_task_definition" "insights-scheduler-task" {
       ]
       environment : [
         {
-          "name" : "DD_API_KEY",
-          valueFrom : "arn:aws:ssm:${var.eg_aws_region}:${var.eg_account_id}:parameter/cloudops-datadog-api-key"
-        },
-        {
           "name" : "ECS_FARGATE",
           "value" : "true"
         },
