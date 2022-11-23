@@ -180,11 +180,13 @@ resource "aws_ecs_task_definition" "insights-connector-git-task" {
           containerPort = 8126
         }
       ]
-      environment : [
+      secrets : [
         {
           "name" : "DD_API_KEY",
           valueFrom : "arn:aws:ssm:${var.eg_aws_region}:${var.eg_account_id}:parameter/cloudops-datadog-api-key"
         },
+      ]
+      environment : [
         {
           "name" : "ECS_FARGATE",
           "value" : "true"
@@ -256,11 +258,13 @@ resource "aws_ecs_task_definition" "insights-connector-jira-task" {
           containerPort = 8126
         }
       ]
-      environment : [
+      secrets : [
         {
           "name" : "DD_API_KEY",
           valueFrom : "arn:aws:ssm:${var.eg_aws_region}:${var.eg_account_id}:parameter/cloudops-datadog-api-key"
         },
+      ]
+      environment : [
         {
           "name" : "ECS_FARGATE",
           "value" : "true"
@@ -332,11 +336,13 @@ resource "aws_ecs_task_definition" "insights-connector-confluence-task" {
           containerPort = 8126
         }
       ]
-      environment : [
+      secrets : [
         {
           "name" : "DD_API_KEY",
           valueFrom : "arn:aws:ssm:${var.eg_aws_region}:${var.eg_account_id}:parameter/cloudops-datadog-api-key"
         },
+      ]
+      environment : [
         {
           "name" : "ECS_FARGATE",
           "value" : "true"
@@ -406,11 +412,13 @@ resource "aws_ecs_task_definition" "insights-connector-gerrit-task" {
           containerPort = 8126
         }
       ]
-      environment : [
+      secrets : [
         {
           "name" : "DD_API_KEY",
           valueFrom : "arn:aws:ssm:${var.eg_aws_region}:${var.eg_account_id}:parameter/cloudops-datadog-api-key"
         },
+      ]
+      environment : [
         {
           "name" : "ECS_FARGATE",
           "value" : "true"
@@ -512,11 +520,13 @@ resource "aws_ecs_task_definition" "insights-connector-github-task" {
           containerPort = 8126
         }
       ]
-      environment : [
+      secrets : [
         {
           "name" : "DD_API_KEY",
           valueFrom : "arn:aws:ssm:${var.eg_aws_region}:${var.eg_account_id}:parameter/cloudops-datadog-api-key"
         },
+      ]
+      environment : [
         {
           "name" : "ECS_FARGATE",
           "value" : "true"
