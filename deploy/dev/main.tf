@@ -860,6 +860,12 @@ resource "aws_ecs_task_definition" "insights-scheduler-task" {
           containerPort = 8126
         }
       ]
+      secrets : [
+        {
+          "name" : "DD_API_KEY",
+          valueFrom : "arn:aws:ssm:${var.eg_aws_region}:${var.eg_account_id}:parameter/cloudops-datadog-api-key"
+        },
+      ]
       environment : [
         {
           "name" : "DD_API_KEY",
