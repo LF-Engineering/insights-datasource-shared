@@ -180,11 +180,13 @@ resource "aws_ecs_task_definition" "insights-connector-git-task" {
           containerPort = 8126
         }
       ]
-      environment : [
+      secrets :[
         {
           "name" : "DD_API_KEY",
           valueFrom : "arn:aws:ssm:${var.eg_aws_region}:${var.eg_account_id}:parameter/cloudops-datadog-api-key"
         },
+      ]
+      environment : [
         {
           "name" : "ECS_FARGATE",
           "value" : "true"
@@ -202,8 +204,8 @@ resource "aws_ecs_task_definition" "insights-connector-git-task" {
     {
       name      = "insights-connector-git"
       image     = "${var.eg_account_id}.dkr.ecr.${var.eg_aws_region}.amazonaws.com/insights-connector-git:stable"
-      cpu       = 1024
-      memory    = 6144
+      cpu       = 768
+      memory    = 5120
       essential = true
       secrets : [
         {
@@ -238,8 +240,8 @@ resource "aws_ecs_task_definition" "insights-connector-jira-task" {
   family                   = "insights-connector-jira-task"
   requires_compatibilities = ["FARGATE"]
   network_mode             = "awsvpc"
-  cpu                      = "256"
-  memory                   = "512"
+  cpu                      = "512"
+  memory                   = "1024"
   execution_role_arn       = aws_iam_role.ecs_task_execution_role.arn
   task_role_arn            = aws_iam_role.ecs_task_role.arn
   container_definitions    = jsonencode([
@@ -256,11 +258,13 @@ resource "aws_ecs_task_definition" "insights-connector-jira-task" {
           containerPort = 8126
         }
       ]
-      environment : [
+      secrets :[
         {
           "name" : "DD_API_KEY",
           valueFrom : "arn:aws:ssm:${var.eg_aws_region}:${var.eg_account_id}:parameter/cloudops-datadog-api-key"
         },
+      ]
+      environment : [
         {
           "name" : "ECS_FARGATE",
           "value" : "true"
@@ -332,11 +336,13 @@ resource "aws_ecs_task_definition" "insights-connector-confluence-task" {
           containerPort = 8126
         }
       ]
-      environment : [
+      secrets :[
         {
           "name" : "DD_API_KEY",
           valueFrom : "arn:aws:ssm:${var.eg_aws_region}:${var.eg_account_id}:parameter/cloudops-datadog-api-key"
         },
+      ]
+      environment : [
         {
           "name" : "ECS_FARGATE",
           "value" : "true"
@@ -354,8 +360,8 @@ resource "aws_ecs_task_definition" "insights-connector-confluence-task" {
     {
       name      = "insights-connector-confluence"
       image     = "${var.eg_account_id}.dkr.ecr.${var.eg_aws_region}.amazonaws.com/insights-connector-confluence:stable"
-      cpu       = 512
-      memory    = 2048
+      cpu       = 256
+      memory    = 1536
       essential = true
       secrets : [
         {
@@ -408,11 +414,13 @@ resource "aws_ecs_task_definition" "insights-connector-gerrit-task" {
           containerPort = 8126
         }
       ]
-      environment : [
+      secrets :[
         {
           "name" : "DD_API_KEY",
           valueFrom : "arn:aws:ssm:${var.eg_aws_region}:${var.eg_account_id}:parameter/cloudops-datadog-api-key"
         },
+      ]
+      environment : [
         {
           "name" : "ECS_FARGATE",
           "value" : "true"
@@ -430,8 +438,8 @@ resource "aws_ecs_task_definition" "insights-connector-gerrit-task" {
     {
       name      = "insights-connector-gerrit"
       image     = "${var.eg_account_id}.dkr.ecr.${var.eg_aws_region}.amazonaws.com/insights-connector-gerrit:stable"
-      cpu       = 512
-      memory    = 4096
+      cpu       = 256
+      memory    = 3072
       essential = true
       secrets : [
         {
@@ -514,11 +522,13 @@ resource "aws_ecs_task_definition" "insights-connector-github-task" {
           containerPort = 8126
         }
       ]
-      environment : [
+      secrets :[
         {
           "name" : "DD_API_KEY",
           valueFrom : "arn:aws:ssm:${var.eg_aws_region}:${var.eg_account_id}:parameter/cloudops-datadog-api-key"
         },
+      ]
+      environment : [
         {
           "name" : "ECS_FARGATE",
           "value" : "true"
@@ -536,8 +546,8 @@ resource "aws_ecs_task_definition" "insights-connector-github-task" {
     {
       name      = "insights-connector-github"
       image     = "${var.eg_account_id}.dkr.ecr.${var.eg_aws_region}.amazonaws.com/insights-connector-github:stable"
-      cpu       = 512
-      memory    = 4096
+      cpu       = 256
+      memory    = 3072
       essential = true
       secrets : [
         {
@@ -862,11 +872,13 @@ resource "aws_ecs_task_definition" "insights-scheduler-task" {
           containerPort = 8126
         }
       ]
-      environment : [
+      secrets :[
         {
           "name" : "DD_API_KEY",
           valueFrom : "arn:aws:ssm:${var.eg_aws_region}:${var.eg_account_id}:parameter/cloudops-datadog-api-key"
         },
+      ]
+      environment : [
         {
           "name" : "ECS_FARGATE",
           "value" : "true"

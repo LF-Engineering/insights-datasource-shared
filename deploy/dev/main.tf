@@ -360,6 +360,8 @@ resource "aws_ecs_task_definition" "insights-connector-confluence-task" {
     {
       name      = "insights-connector-confluence"
       image     = "${var.eg_account_id}.dkr.ecr.${var.eg_aws_region}.amazonaws.com/insights-connector-confluence:latest"
+      cpu       = 256
+      memory    = 1536
       essential = true
       secrets : [
         {
