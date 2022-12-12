@@ -213,6 +213,30 @@ resource "aws_ecs_task_definition" "insights-connector-git-task" {
       essential = true
       secrets : [
         {
+          name : "AUTH_GRANT_TYPE",
+          valueFrom : "arn:aws:ssm:${var.eg_aws_region}:${var.eg_account_id}:parameter/insights/auth0_grant_type"
+        },
+        {
+          name : "AUTH_CLIENT_ID",
+          valueFrom : "arn:aws:ssm:${var.eg_aws_region}:${var.eg_account_id}:parameter/insights/auth0_client_id"
+        },
+        {
+          name : "AUTH_CLIENT_SECRET",
+          valueFrom : "arn:aws:ssm:${var.eg_aws_region}:${var.eg_account_id}:parameter/insights/auth0_client_secret"
+        },
+        {
+          name : "AUTH_AUDIENCE",
+          valueFrom : "arn:aws:ssm:${var.eg_aws_region}:${var.eg_account_id}:parameter/insights/auth0_audience"
+        },
+        {
+          name : "AUTH0_URL",
+          valueFrom : "arn:aws:ssm:${var.eg_aws_region}:${var.eg_account_id}:parameter/insights/auth0_url"
+        },
+        {
+          name : "ES_CACHE_URL",
+          valueFrom : "arn:aws:ssm:${var.eg_aws_region}:${var.eg_account_id}:parameter/insights/elastic_cache_url"
+        },
+        {
           name : "BOT_NAME_REGEX",
           valueFrom : "arn:aws:ssm:${var.eg_aws_region}:${var.eg_account_id}:parameter/insights/connectors/bot_name_regex"
         },
