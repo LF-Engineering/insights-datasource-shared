@@ -153,3 +153,25 @@ func (m *Manager) SaveWithKey(payload []byte, objectKey string) error {
 	})
 	return err
 }
+
+// GetFilesFromSubFolder returns files from a subfolder in the bucket
+func (m *Manager) GetFilesFromSubFolder(folder string) ([]string, error) {
+	sess := session.Must(session.NewSession(&aws.Config{Region: aws.String(m.region)}))
+	svc := s3.New(sess)
+
+	var objects []string
+	err := svc.ListObjectsPages(&s3.ListObjectsInput{
+		Bucket: aws.String(m.bucketName),
+		Prefix: aws.String(folder),
+	}, func(p *s3.ListObjectsOutput, lastPage bool) bool {
+		for _, o := range p.Contents {
+			objects = append(objects, aws.StringValue(o.Key))
+		}
+		return true // continue paging
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	return objects, nil
+}
