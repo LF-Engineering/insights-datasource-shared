@@ -11,7 +11,7 @@ import (
 )
 
 const (
-	Path         = "report/%s/%s/%s"
+	Path         = "report/new/%s"
 	LastSyncFile = "0000-last-sync"
 	Bucket       = "insights-v2-cache-%s"
 	Region       = "us-east-2"
@@ -19,15 +19,12 @@ const (
 
 type Manager struct {
 	s3Manager S3Manager
-	connector string
-	endpoint  string
 }
 
-func NewManager(connector string, environment string) *Manager {
+func NewManager(environment string) *Manager {
 	s3Manager := s3util.NewManager(fmt.Sprintf(Bucket, environment), Region)
 	return &Manager{
 		s3Manager: s3Manager,
-		connector: connector,
 	}
 }
 
@@ -42,7 +39,7 @@ type S3Manager interface {
 
 // IsKeyCreated check if the key already exists
 func (m *Manager) IsKeyCreated(endpoint string, id string) (bool, error) {
-	key := fmt.Sprintf(Path, m.connector, endpoint, id)
+	key := fmt.Sprintf(Path, endpoint)
 	_, err := m.s3Manager.Get(key)
 	if err != nil {
 		if aerr, ok := err.(awserr.Error); ok {
@@ -61,11 +58,7 @@ func (m *Manager) IsKeyCreated(endpoint string, id string) (bool, error) {
 // Create new cache record
 func (m *Manager) Create(endpoint string, data []map[string]interface{}) error {
 	for _, v := range data {
-		id, ok := v["id"]
-		if !ok {
-			return fmt.Errorf("error getting id")
-		}
-		key := fmt.Sprintf(Path, m.connector, endpoint, id)
+		key := fmt.Sprintf(Path, endpoint)
 		b, err := json.Marshal(v["data"])
 		if err != nil {
 			return err
@@ -81,7 +74,8 @@ func (m *Manager) Create(endpoint string, data []map[string]interface{}) error {
 
 // GetLastSync get connector sync date, if it is not exist return epoch date
 func (m *Manager) GetLastSync(endpoint string) (time.Time, error) {
-	key := fmt.Sprintf(Path, m.connector, endpoint, LastSyncFile)
+	path := Path + "-%s"
+	key := fmt.Sprintf(path, endpoint, LastSyncFile)
 	from, err := time.Parse("2006-01-02 15:04:05", "1970-01-01 00:00:00")
 	if err != nil {
 		return from, err
@@ -108,7 +102,8 @@ func (m *Manager) GetLastSync(endpoint string) (time.Time, error) {
 
 // SetLastSync update connector last sync date
 func (m *Manager) SetLastSync(endpoint string, lastSync time.Time) error {
-	key := fmt.Sprintf(Path, m.connector, endpoint, LastSyncFile)
+	path := Path + "-%s"
+	key := fmt.Sprintf(path, endpoint, LastSyncFile)
 	b, err := json.Marshal(lastSync)
 	if err != nil {
 		return err
@@ -121,8 +116,8 @@ func (m *Manager) SetLastSync(endpoint string, lastSync time.Time) error {
 }
 
 // GetFileByKey get file by key
-func (m *Manager) GetFileByKey(endpoint string, id string) ([]byte, error) {
-	key := fmt.Sprintf(Path, m.connector, endpoint, id)
+func (m *Manager) GetFileByKey(endpoint string) ([]byte, error) {
+	key := fmt.Sprintf(Path, endpoint)
 	data, err := m.s3Manager.Get(key)
 	if err != nil {
 		if aerr, ok := err.(awserr.Error); ok {
@@ -139,8 +134,8 @@ func (m *Manager) GetFileByKey(endpoint string, id string) ([]byte, error) {
 }
 
 // UpdateFileByKey get file by key
-func (m *Manager) UpdateFileByKey(endpoint string, id string, data []byte) error {
-	key := fmt.Sprintf(Path, m.connector, endpoint, id)
+func (m *Manager) UpdateFileByKey(endpoint string, data []byte) error {
+	key := fmt.Sprintf(Path, endpoint)
 	err := m.s3Manager.SaveWithKey(data, key)
 	if err != nil {
 		return err
