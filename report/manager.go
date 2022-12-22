@@ -15,6 +15,7 @@ const (
 	LastSyncFile = "0000-last-sync"
 	Bucket       = "insights-v2-cache-%s"
 	Region       = "us-east-2"
+	FilesPath    = "report/new/"
 )
 
 type Manager struct {
@@ -35,6 +36,7 @@ type S3Manager interface {
 	GetKeys() ([]string, error)
 	Get(key string) ([]byte, error)
 	Delete(key string) error
+	GetFilesFromSubFolder(folder string) ([]string, error)
 }
 
 // IsKeyCreated check if the key already exists
@@ -137,6 +139,24 @@ func (m *Manager) GetFileByKey(endpoint string) ([]byte, error) {
 func (m *Manager) UpdateFileByKey(endpoint string, data []byte) error {
 	key := fmt.Sprintf(Path, endpoint)
 	err := m.s3Manager.SaveWithKey(data, key)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+// GetAllFiles returns all files containing report data
+func (m *Manager) GetAllFiles() ([]string, error) {
+	files, err := m.s3Manager.GetFilesFromSubFolder(FilesPath)
+	if err != nil {
+		return nil, err
+	}
+	return files, nil
+}
+
+// GetAllFiles returns all files containing report data
+func (m *Manager) DeleteFile(key string) error {
+	err := m.s3Manager.Delete(key)
 	if err != nil {
 		return err
 	}
