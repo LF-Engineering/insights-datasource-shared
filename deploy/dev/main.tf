@@ -213,6 +213,10 @@ resource "aws_ecs_task_definition" "insights-connector-git-task" {
       essential = true
       secrets : [
         {
+          name : "DATA_LAKE_SERVICE_URL",
+          valueFrom : "arn:aws:ssm:${var.eg_aws_region}:${var.eg_account_id}:parameter/insights/connectors/datalakeurl"
+        },
+        {
           name : "AUTH_GRANT_TYPE",
           valueFrom : "arn:aws:ssm:${var.eg_aws_region}:${var.eg_account_id}:parameter/insights/auth0_grant_type"
         },
