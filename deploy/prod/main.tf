@@ -694,16 +694,16 @@ resource "aws_ecs_task_definition" "insights-connector-jenkins-task" {
   family                   = "insights-connector-jenkins-task"
   requires_compatibilities = ["FARGATE"]
   network_mode             = "awsvpc"
-  cpu                      = "512"
-  memory                   = "4096"
+  cpu                      = "1024"
+  memory                   = "6144"
   execution_role_arn       = aws_iam_role.ecs_task_execution_role.arn
   task_role_arn            = aws_iam_role.ecs_task_role.arn
   container_definitions    = jsonencode([
     {
       name      = "insights-connector-jenkins"
       image     = "${var.eg_account_id}.dkr.ecr.${var.eg_aws_region}.amazonaws.com/insights-connector-jenkins:stable"
-      cpu       = 128
-      memory    = 512
+      cpu       = 768
+      memory    = 5120
       essential = true
       logConfiguration : {
         "logDriver" : "awslogs",
