@@ -355,7 +355,7 @@ resource "aws_ecs_task_definition" "insights-connector-confluence-task" {
   requires_compatibilities = ["FARGATE"]
   network_mode             = "awsvpc"
   cpu                      = "512"
-  memory                   = "2048"
+  memory                   = "3072"
   execution_role_arn       = aws_iam_role.ecs_task_execution_role.arn
   task_role_arn            = aws_iam_role.ecs_task_role.arn
   container_definitions    = jsonencode([
@@ -401,7 +401,7 @@ resource "aws_ecs_task_definition" "insights-connector-confluence-task" {
       name      = "insights-connector-confluence"
       image     = "${var.eg_account_id}.dkr.ecr.${var.eg_aws_region}.amazonaws.com/insights-connector-confluence:stable"
       cpu       = 256
-      memory    = 1536
+      memory    = 2560
       essential = true
       secrets : [
         {
