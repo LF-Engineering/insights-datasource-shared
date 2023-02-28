@@ -146,3 +146,44 @@ func (m *Manager) UpdateFileByKey(endpoint string, id string, data []byte) error
 	}
 	return nil
 }
+
+// SetLastSyncFile update connector last sync file date
+func (m *Manager) SetLastSyncFile(endpoint string, data []byte) error {
+	key := fmt.Sprintf(Path, m.connector, endpoint, LastSyncFile)
+	if err := m.s3Manager.SaveWithKey(data, key); err != nil {
+		return err
+	}
+	return nil
+}
+
+// GetLastSyncFile get connector last sync file, if it is not exist return empty file with last sync epoch date
+func (m *Manager) GetLastSyncFile(endpoint string) ([]byte, error) {
+	key := fmt.Sprintf(Path, m.connector, endpoint, LastSyncFile)
+	from, err := time.Parse("2006-01-02 15:04:05", "1970-01-01 00:00:00")
+	if err != nil {
+		return []byte{}, err
+	}
+	lastSyncData := LastSyncData{LastSync: from}
+	b, err := json.Marshal(lastSyncData)
+	if err != nil {
+		return b, err
+	}
+	d, err := m.s3Manager.Get(key)
+	if err != nil {
+		if aerr, ok := err.(awserr.Error); ok {
+			switch aerr.Code() {
+			case s3.ErrCodeNoSuchKey:
+				return b, m.SetLastSyncFile(endpoint, b)
+			default:
+				return b, err
+			}
+		}
+		return b, err
+	}
+
+	return d, nil
+}
+
+type LastSyncData struct {
+	LastSync time.Time `json:"last_sync"`
+}
