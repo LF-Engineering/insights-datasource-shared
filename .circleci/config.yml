@@ -112,7 +112,7 @@ workflows:
             - development
           filters:
             branches:
-              only: main
+              only: remove-dev-tracing-container #main
           requires:
             - validate_dev
       - validate_prod:
