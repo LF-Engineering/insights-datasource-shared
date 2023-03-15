@@ -187,6 +187,7 @@ func (s *Logger) Filter(log *Log) ([]Log, error) {
 
 	must := createMustTerms(log)
 	query := map[string]interface{}{
+		"size": 1000,
 		"query": map[string]interface{}{
 			"bool": map[string]interface{}{
 				"must": must,
