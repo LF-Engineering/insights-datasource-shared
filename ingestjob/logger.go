@@ -20,6 +20,7 @@ const (
 	Internal    = "internal"
 	getAttempts = 2
 	getDelay    = 3 * time.Second
+	QuerySize   = 1000
 )
 
 // ESLogProvider used in connecting to ES logging server
@@ -187,7 +188,7 @@ func (s *Logger) Filter(log *Log) ([]Log, error) {
 
 	must := createMustTerms(log)
 	query := map[string]interface{}{
-		"size": 1000,
+		"size": QuerySize,
 		"query": map[string]interface{}{
 			"bool": map[string]interface{}{
 				"must": must,
