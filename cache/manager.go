@@ -37,6 +37,7 @@ type S3Manager interface {
 	GetKeys() ([]string, error)
 	Get(key string) ([]byte, error)
 	Delete(key string) error
+	UploadMultipart(fileName string, path string) error
 }
 
 // IsKeyCreated check if the key already exists
@@ -182,6 +183,15 @@ func (m *Manager) GetLastSyncFile(endpoint string) ([]byte, error) {
 	}
 
 	return d, nil
+}
+
+func (m *Manager) UpdateMultiPartFileByKey(endpoint string, id string) error {
+	key := fmt.Sprintf(Path, m.connector, endpoint, id)
+	err := m.s3Manager.UploadMultipart(id, key)
+	if err != nil {
+		return err
+	}
+	return nil
 }
 
 type LastSyncData struct {
