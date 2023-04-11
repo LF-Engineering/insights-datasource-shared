@@ -219,10 +219,10 @@ func (m *Manager) UploadMultipart(fileName string, path string) error {
 		} else {
 			partLength = maxPartSize
 		}
-		completedPart, err := uploadPart(svc, resp, file, partNumber, maxRetries)
+		completedPart, err := uploadPart(svc, resp, buffer[curr:curr+partLength], partNumber, maxRetries)
 		if err != nil {
 			fmt.Println(err.Error())
-			err := abortMultipartUpload(svc, resp)
+			err = abortMultipartUpload(svc, resp)
 			if err != nil {
 				fmt.Println(err.Error())
 			}
@@ -254,14 +254,15 @@ func completeMultipartUpload(svc *s3.S3, resp *s3.CreateMultipartUploadOutput, c
 	return svc.CompleteMultipartUpload(completeInput)
 }
 
-func uploadPart(svc *s3.S3, resp *s3.CreateMultipartUploadOutput, file *os.File, partNumber int, maxRetries int) (*s3.CompletedPart, error) {
+func uploadPart(svc *s3.S3, resp *s3.CreateMultipartUploadOutput, fileBytes []byte, partNumber int, maxRetries int) (*s3.CompletedPart, error) {
 	tryNum := 1
 	partInput := &s3.UploadPartInput{
-		Body:       file,
-		Bucket:     resp.Bucket,
-		Key:        resp.Key,
-		PartNumber: aws.Int64(int64(partNumber)),
-		UploadId:   resp.UploadId,
+		Body:          bytes.NewReader(fileBytes),
+		Bucket:        resp.Bucket,
+		Key:           resp.Key,
+		PartNumber:    aws.Int64(int64(partNumber)),
+		UploadId:      resp.UploadId,
+		ContentLength: aws.Int64(int64(len(fileBytes))),
 	}
 
 	for tryNum <= maxRetries {
