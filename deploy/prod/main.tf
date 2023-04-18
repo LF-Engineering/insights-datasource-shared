@@ -1026,6 +1026,65 @@ resource "aws_ecs_task_definition" "insights-repositories-association-task" {
 
 }
 
+resource "aws_ecs_task_definition" "insights-connector-git-orphaned-handler-task" {
+  family                   = "insights-connector-git-orphaned-handler-task"
+  requires_compatibilities = ["FARGATE"]
+  network_mode             = "awsvpc"
+  cpu                      = "1024"
+  memory                   = "4096"
+  execution_role_arn       = aws_iam_role.ecs_task_execution_role.arn
+  task_role_arn            = aws_iam_role.ecs_task_role.arn
+  container_definitions    = jsonencode([
+    {
+      name      = "insights-connector-git-orphaned-handler"
+      image     = "${var.eg_account_id}.dkr.ecr.${var.eg_aws_region}.amazonaws.com/insights-connector-git-orphaned-handler:stable"
+      cpu       = 1024
+      memory    = 4096
+      essential = true
+      secrets : [
+        {
+          name : "DATA_LAKE_SERVICE_URL",
+          valueFrom : "arn:aws:ssm:${var.eg_aws_region}:${var.eg_account_id}:parameter/insights/connectors/datalakeurl"
+        },
+        {
+          name : "AUTH_GRANT_TYPE",
+          valueFrom : "arn:aws:ssm:${var.eg_aws_region}:${var.eg_account_id}:parameter/insights/auth0_grant_type"
+        },
+        {
+          name : "AUTH_CLIENT_ID",
+          valueFrom : "arn:aws:ssm:${var.eg_aws_region}:${var.eg_account_id}:parameter/insights/auth0_client_id"
+        },
+        {
+          name : "AUTH_CLIENT_SECRET",
+          valueFrom : "arn:aws:ssm:${var.eg_aws_region}:${var.eg_account_id}:parameter/insights/auth0_client_secret"
+        },
+        {
+          name : "AUTH_AUDIENCE",
+          valueFrom : "arn:aws:ssm:${var.eg_aws_region}:${var.eg_account_id}:parameter/insights/auth0_audience"
+        },
+        {
+          name : "AUTH0_URL",
+          valueFrom : "arn:aws:ssm:${var.eg_aws_region}:${var.eg_account_id}:parameter/insights/auth0_url"
+        },
+        {
+          name : "ES_CACHE_URL",
+          valueFrom : "arn:aws:ssm:${var.eg_aws_region}:${var.eg_account_id}:parameter/insights/elastic_cache_url"
+        },
+      ],
+      logConfiguration : {
+        "logDriver" : "awslogs",
+        "options" : {
+          "awslogs-group" : "insights-ecs-connector-git",
+          "awslogs-region" : var.eg_aws_region,
+          "awslogs-create-group" : "true",
+          "awslogs-stream-prefix" : "ecs"
+        }
+      }
+    }
+  ])
+
+}
+
 /* ecs scheduler service */
 resource "aws_ecs_service" "insights-scheduler" {
   name                = "insights-scheduler"
