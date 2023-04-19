@@ -1030,16 +1030,16 @@ resource "aws_ecs_task_definition" "insights-connector-git-orphaned-handler-task
   family                   = "insights-connector-git-orphaned-handler-task"
   requires_compatibilities = ["FARGATE"]
   network_mode             = "awsvpc"
-  cpu                      = "1024"
-  memory                   = "4096"
+  cpu                      = "4096"
+  memory                   = "16384"
   execution_role_arn       = aws_iam_role.ecs_task_execution_role.arn
   task_role_arn            = aws_iam_role.ecs_task_role.arn
   container_definitions    = jsonencode([
     {
       name      = "insights-connector-git-orphaned-handler"
       image     = "${var.eg_account_id}.dkr.ecr.${var.eg_aws_region}.amazonaws.com/insights-connector-git-orphaned-handler:stable"
-      cpu       = 1024
-      memory    = 4096
+      cpu       = 4096
+      memory    = 16384
       essential = true
       secrets : [
         {
