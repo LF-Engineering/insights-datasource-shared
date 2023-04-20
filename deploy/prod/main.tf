@@ -1256,3 +1256,32 @@ resource "aws_iam_role_policy_attachment" "attach-describe-tasks" {
   role       = aws_iam_role.ecs_task_role.name
   policy_arn = aws_iam_policy.describe_insights_tasks.arn
 }
+
+data "aws_iam_policy_document" "athena_query" {
+  statement {
+    sid       = ""
+    effect    = "Allow"
+    actions   = [
+      "athena:StartQueryExecution",
+      "athena:StopQueryExecution",
+      "athena:GetQueryExecution",
+      "athena:GetQueryResults",
+      "athena:GetDataCatalog",
+      "athena:GetWorkGroup",
+    ]
+    resources = [
+      "arn:aws:athena:*:${var.eg_account_id}:workgroup/*"
+    ]
+  }
+}
+
+resource "aws_iam_policy" "athena_query" {
+  name        = "executeAthenaQuery"
+  description = "Policy allows query athena"
+  policy      = data.aws_iam_policy_document.athena_query.json
+}
+
+resource "aws_iam_role_policy_attachment" "attach-query-athena" {
+  role       = aws_iam_role.ecs_task_role.name
+  policy_arn = aws_iam_policy.athena_query.arn
+}
