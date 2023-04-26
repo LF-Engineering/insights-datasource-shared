@@ -1090,16 +1090,16 @@ resource "aws_ecs_task_definition" "insights-connector-git-bigrepos-task" {
   family                   = "insights-connector-git-bigrepos-task"
   requires_compatibilities = ["FARGATE"]
   network_mode             = "awsvpc"
-  cpu                      = "2048"
-  memory                   = "7168"
+  cpu                      = "4096"
+  memory                   = "16384"
   execution_role_arn       = aws_iam_role.ecs_task_execution_role.arn
   task_role_arn            = aws_iam_role.ecs_task_role.arn
   container_definitions    = jsonencode([
     {
       name      = "insights-connector-git-bigrepos"
       image     = "${var.eg_account_id}.dkr.ecr.${var.eg_aws_region}.amazonaws.com/insights-connector-git-bigrepos:stable"
-      cpu       = 2048
-      memory    = 7168
+      cpu       = 4096
+      memory    = 16384
       essential = true
       secrets : [
         {
