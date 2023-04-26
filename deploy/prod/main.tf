@@ -1141,6 +1141,10 @@ resource "aws_ecs_task_definition" "insights-connector-git-bigrepos-task" {
         {
           name : "BOT_EMAIL_REGEX",
           valueFrom : "arn:aws:ssm:${var.eg_aws_region}:${var.eg_account_id}:parameter/insights/connectors/bot_email_regex"
+        },
+        {
+          name : "PACK_SIZE",
+          valueFrom : "arn:aws:ssm:${var.eg_aws_region}:${var.eg_account_id}:parameter/insights/connectors/git_big_repos_pack_size"
         }
       ],
       logConfiguration : {
