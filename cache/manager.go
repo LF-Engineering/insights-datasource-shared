@@ -194,6 +194,26 @@ func (m *Manager) UpdateMultiPartFileByKey(endpoint string, id string) error {
 	return nil
 }
 
+func (m *Manager) BulkCreate(endpoint string, data []map[string]interface{}) error {
+	for _, v := range data {
+		id, ok := v["id"]
+		if !ok {
+			return fmt.Errorf("error getting id")
+		}
+		key := fmt.Sprintf(Path, m.connector, endpoint, id)
+		b, err := json.Marshal(v["data"])
+		if err != nil {
+			return err
+		}
+
+		err = m.s3Manager.SaveWithKey(b, key)
+		if err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
 type LastSyncData struct {
 	LastSync time.Time `json:"last_sync"`
 }
