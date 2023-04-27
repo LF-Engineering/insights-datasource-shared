@@ -112,7 +112,7 @@ workflows:
             - development
           filters:
             branches:
-              only: add-git-big-repos-connector #main
+              only: main
           requires:
             - validate_dev
       - validate_prod:
